@@ -48,11 +48,6 @@ if __name__ == "__main__":
     print(f" - MQTT QoS:    {mqtt_qos}")
     print(f" - Measurement: '{measurement}'")
 
-    print("Reading config file")
-
-    with open(cfg_file, "r") as f:
-        cfg = yaml.safe_load(f)
-
     print("Connecting to MQTT broker")
 
     client = mqtt.Client(device, clean_session=False)
@@ -61,5 +56,9 @@ if __name__ == "__main__":
     print("Starting loop")
 
     while True:
+        with open(cfg_file, "r") as f:
+            cfg = yaml.safe_load(f)
         process(cfg, client, mqtt_qos, measurement)
+        if interval == 0:
+            break
         time.sleep(interval)
