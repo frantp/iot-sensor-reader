@@ -5,6 +5,7 @@ import os
 import time
 import toml
 import paho.mqtt.client as mqtt
+import RPi.GPIO as GPIO
 import importlib
 import traceback
 
@@ -16,12 +17,21 @@ def format_msg(timestamp, measurement, tags, fields):
 
 
 def process(cfg, client, qos, measurement):
+    PIN_STR = "PIN"
+    pin_list = [cfg[sensor][PIN_STR]
+        for sensor in cfg if cfg[sensor][PIN_STR]]
+    GPIO.setup(pin_list, GPIO.OUT)
     for sensor in cfg:
         sensor_id = sensor.split("_", 1)[0]
         try:
+            GPIO.output(pin_list, GPIO.HIGH)
+            scfg = cfg[sensor]
+            if PIN_STR in scfg:
+                GPIO.output(scfg[PIN_STR], GPIO.LOW)
+                scfg = {k: v for k, v in scfg.items() if k != PIN_STR}
             sensor_module = importlib.import_module(f"sensors.{sensor}")
-            reader = getattr(sensor_module, "Reader")(**cfg[sensor])
-            timestamp, fields = reader.read()
+            with getattr(sensor_module, "Reader")(**scfg) as reader:
+                timestamp, fields = reader.read()
             tags = {
                 "device": client._client_id,
                 "sensor": sensor_id
@@ -29,6 +39,7 @@ def process(cfg, client, qos, measurement):
             client.publish(format_msg(timestamp, measurement, tags, fields))
         except:
             traceback.print_exc()
+    GPIO.cleanup()
 
 
 if __name__ == "__main__":
@@ -47,7 +58,9 @@ if __name__ == "__main__":
     client = mqtt.Client(device, clean_session=False)
     client.connect(mqtt_host, mqtt_port)
 
-    print("Starting loop")
+    print("Starting readings")
+
+    GPIO.setmode(GPIO.BOARD)
 
     while True:
         cfg = toml.load(cfg_file)

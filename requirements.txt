@@ -1,5 +1,12 @@
 toml
 paho-mqtt
-#bme280 adafruit-circuitpython-bme280
-#bme680 adafruit-circuitpython-bme680
-#tsl2561 tsl2561
+RPi.GPIO
+smbus2
+pyserial
+#adxl34x adafruit-circuitpython-adxl34x
+#amg88xx adafruit-circuitpython-amg88xx
+#bme280  adafruit-circuitpython-bme280
+#bme680  adafruit-circuitpython-bme680
+#dht     adafruit-circuitpython-dht
+#tsl2561 adafruit-circuitpython-tsl2561
+#tsl2591 adafruit-circuitpython-tsl2591
