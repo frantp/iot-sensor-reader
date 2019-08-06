@@ -1,4 +1,4 @@
-pyyaml
+toml
 paho-mqtt
 #bme280 adafruit-circuitpython-bme280
 #bme680 adafruit-circuitpython-bme680
