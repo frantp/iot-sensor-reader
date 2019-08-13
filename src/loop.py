@@ -39,7 +39,6 @@ def process(cfg, client, qos, measurement):
             client.publish(format_msg(timestamp, measurement, tags, fields))
         except:
             traceback.print_exc()
-    GPIO.cleanup()
 
 
 if __name__ == "__main__":
@@ -62,13 +61,16 @@ if __name__ == "__main__":
 
     GPIO.setmode(GPIO.BOARD)
 
-    while True:
-        cfg = toml.load(cfg_file)
-        interval = cfg.get("interval", 0)
-        qos = cfg.get("qos", 2)
-        measurement = cfg.get("measurement", "sensors")
-        sensors = cfg.get("sensors", {})
-        process(sensors, client, qos, measurement)
-        if interval == 0:
-            break
-        time.sleep(interval)
+    try:
+        while True:
+            cfg = toml.load(cfg_file)
+            interval = cfg.get("interval", 0)
+            qos = cfg.get("qos", 2)
+            measurement = cfg.get("measurement", "sensors")
+            sensors = cfg.get("sensors", {})
+            process(sensors, client, qos, measurement)
+            if interval == 0:
+                break
+            time.sleep(interval)
+    finally:
+        GPIO.cleanup()

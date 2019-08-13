@@ -1,13 +1,14 @@
-FROM python:3
+FROM arm32v6/python:3-alpine
+
+ARG sensor_flags=""
 
 WORKDIR /sreader
 
-ARG sensor_flags="ALL"
-
 COPY fix_deps.py requirements.txt ./
-RUN python fix_deps.py requirements.txt final_requirements.txt ${sensor_flags}
-RUN pip install --no-cache-dir -r final_requirements.txt
-
+RUN apk add --no-cache --virtual .build-deps build-base linux-headers && \
+    python fix_deps.py requirements.txt final_requirements.txt ${sensor_flags} && \
+    pip install --no-cache-dir -r final_requirements.txt && \
+    apk del .build-deps
 COPY src/ src/
 
 CMD ["python", "-u", "src/loop.py"]
