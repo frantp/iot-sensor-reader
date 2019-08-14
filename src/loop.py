@@ -17,9 +17,9 @@ def format_msg(timestamp, measurement, tags, fields):
 
 
 def process(cfg, client, qos, measurement):
-    PIN_STR = "PIN"
+    PIN_STR = "ACTIVATION_PIN"
     pin_list = [cfg[sensor][PIN_STR]
-        for sensor in cfg if cfg[sensor][PIN_STR]]
+        for sensor in cfg if PIN_STR in cfg[sensor]]
     GPIO.setup(pin_list, GPIO.OUT)
     for sensor in cfg:
         sensor_id = sensor.split("_", 1)[0]
