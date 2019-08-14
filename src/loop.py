@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     print("Starting readings")
 
-    GPIO.setmode(GPIO.BOARD)
+    GPIO.setmode(GPIO.BCM)
 
     try:
         while True:
