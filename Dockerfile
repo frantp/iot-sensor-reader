@@ -11,4 +11,4 @@ RUN apk add --no-cache --virtual .build-deps build-base linux-headers && \
     apk del .build-deps
 COPY src/ src/
 
-CMD ["python", "-u", "src/loop.py"]
+CMD ["python", "-u", "src/loop.py", "sreader.conf"]

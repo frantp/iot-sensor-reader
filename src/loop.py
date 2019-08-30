@@ -42,8 +42,11 @@ def process(cfg, client, qos, measurement):
 
 
 if __name__ == "__main__":
-    cfg_file = sys.argv[1] if len(sys.argv) >= 2 else "sreader.conf"
-    device    =     os.getenv("IOTSR_DEVICE_ID", "test")
+    if len(sys.argv) <= 1:
+        print(f"Usage: {sys.argv[0]} <cfg_file> [device_id]")
+    cfg_file  = sys.argv[1]
+    device    = sys.argv[2] if len(sys.argv) > 2 else \
+                    os.getenv("IOTSR_DEVICE_ID", "test")
     mqtt_host =     os.getenv("IOTSR_MQTT_HOST", "localhost")
     mqtt_port = int(os.getenv("IOTSR_MQTT_PORT", "1883"))
 
@@ -65,12 +68,17 @@ if __name__ == "__main__":
         while True:
             cfg = toml.load(cfg_file)
             interval = cfg.get("interval", 0)
+            if interval > 0:
+                time.sleep(interval - time.time() % interval)
+
+            cfg = toml.load(cfg_file)
             qos = cfg.get("qos", 2)
             measurement = cfg.get("measurement", "sensors")
             sensors = cfg.get("sensors", {})
             process(sensors, client, qos, measurement)
-            if interval == 0:
+
+            if interval <= 0:
                 break
-            time.sleep(interval)
+
     finally:
         GPIO.cleanup()
