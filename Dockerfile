@@ -4,6 +4,7 @@ ARG sensor_flags=""
 
 WORKDIR /sreader
 
+RUN apk add libc6-compat
 COPY fix_deps.py requirements.txt ./
 RUN apk add --no-cache --virtual .build-deps build-base linux-headers && \
     python fix_deps.py requirements.txt final_requirements.txt ${sensor_flags} && \
