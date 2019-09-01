@@ -19,7 +19,7 @@ class Reader(SerialReader):
         #dsrdtr=True, timeout=5, inter_byte_timeout=0.1)
 
     def read(self):
-        tm = time.time_ns()
+        tm = int(time.time() * 1e9)
         self._serial.write(_REQUEST_SEQ)
         res = self._serial.read(9)
         if res[0:1] != b"\xFF\x86" or _checksum(res[:-1]) != res[-1]:

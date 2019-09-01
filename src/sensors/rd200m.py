@@ -16,7 +16,7 @@ class Reader(SerialReader):
         super().__init__(port, 19200)
 
     def read(self):
-        tm = time.time_ns()
+        tm = int(time.time() * 1e9)
         self._serial.write(_REQUEST_SEQ)
         res = self._serial.read(8)
         if res[0:2] != b"\x02\x01\x04" or _checksum(res[:-1]) != res[-1]:

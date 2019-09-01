@@ -12,13 +12,13 @@ _CMD_READ_MEASURING_VALUE_1M  = 0xB3
 _CMD_READ_FIRMWARE_VERSION    = 0xB4
 
 
-class Reader():
+class Reader:
     def __init__(self, address=0x18):
         self._sensor = SMBus(1)
         self._address = address
 
     def read(self):
-        tm = time.time_ns()
+        tm = int(time.time() * 1e9)
         status, vibration = bus.read_i2c_block_data(
             self._address, _CMD_READ_STATUS, 2)
         minutes, seconds = bus.read_i2c_block_data(

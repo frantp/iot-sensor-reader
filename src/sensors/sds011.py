@@ -38,7 +38,7 @@ class Reader(SerialReader):
         
 
     def read(self):
-        tm = time.time_ns()
+        tm = int(time.time() * 1e9)
         self._serial.write(_seq(_REQUEST_CODES))
         res = self._serial.read(10)
         if res[0:1] != b"\xAA\xC0" or _checksum(res[:-1]) != res[-1]:

@@ -3,10 +3,10 @@ paho-mqtt
 RPi.GPIO
 smbus2
 pyserial
-#adxl34x adafruit-circuitpython-adxl34x
-#amg88xx adafruit-circuitpython-amg88xx
-#bme280  adafruit-circuitpython-bme280
-#bme680  adafruit-circuitpython-bme680
-#dht     adafruit-circuitpython-dht
-#tsl2561 adafruit-circuitpython-tsl2561
-#tsl2591 adafruit-circuitpython-tsl2591
+adafruit-circuitpython-adxl34x # adxl34x
+adafruit-circuitpython-amg88xx # amg88xx
+adafruit-circuitpython-bme280  # bme280
+adafruit-circuitpython-bme680  # bme680
+adafruit-circuitpython-dht     # dht
+adafruit-circuitpython-tsl2561 # tsl2561
+adafruit-circuitpython-tsl2591 # tsl2591
