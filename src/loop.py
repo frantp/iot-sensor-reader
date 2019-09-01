@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from collections import OrderedDict
 import importlib
 import os
 import socket
@@ -23,6 +24,7 @@ def process(cfg, client, qos, measurement):
     pin_list = [cfg[sensor][PIN_STR]
         for sensor in cfg if PIN_STR in cfg[sensor]]
     GPIO.setup(pin_list, GPIO.OUT)
+    device = client._client_id
     for sensor in cfg:
         try:
             GPIO.output(pin_list, GPIO.HIGH)
@@ -33,11 +35,11 @@ def process(cfg, client, qos, measurement):
             sensor_module = importlib.import_module("sensors." + sensor)
             with getattr(sensor_module, "Reader")(**scfg) as reader:
                 timestamp, fields = reader.read()
-            tags = {
-                "device": client._client_id,
-                "sensor": sensor
-            } 
-            client.publish("sensors",
+            tags = OrderedDict([
+                ("device", device),
+                ("sensor", sensor)
+            ])
+            client.publish("{}/{}/{}".format(measurement, device, sensor),
                 format_msg(timestamp, measurement, tags, fields), qos=qos)
         except:
             traceback.print_exc()
