@@ -4,7 +4,7 @@ from serial import Serial
 
 class SerialReader(BaseReader):
     def __init__(self, *args, **kwargs):
-        super.__init__()
+        super().__init__()
         self._serial = Serial(*args, **kwargs)
         self._serial.flush()
 
