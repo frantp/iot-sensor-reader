@@ -1,6 +1,6 @@
+from sensors.base_sensor import BaseReader
 import time
 from collections import OrderedDict
-from sensors.serial_sensor import SerialReader
 from smbus2 imoprt SMBus
 
 
@@ -12,8 +12,9 @@ _CMD_READ_MEASURING_VALUE_1M  = 0xB3
 _CMD_READ_FIRMWARE_VERSION    = 0xB4
 
 
-class Reader:
+class Reader(BaseReader):
     def __init__(self, address=0x18):
+        super().__init__()
         self._sensor = SMBus(1)
         self._address = address
 

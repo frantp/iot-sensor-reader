@@ -1,6 +1,6 @@
+from sensors.base.serial_sensor import SerialReader
 import time
 from collections import OrderedDict
-from sensors.serial_sensor import SerialReader
 from serial import SerialException
 import struct
 
