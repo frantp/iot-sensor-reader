@@ -10,9 +10,9 @@ class SerialReader(BaseReader):
 
     def __enter__(self):
         super().__enter__()
-        self._serial.__enter__(self)
+        self._serial.__enter__()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._serial.__exit__(self, exc_type, exc_value, traceback)
-        super().__exit__()
+        self._serial.__exit__(exc_type, exc_value, traceback)
+        super().__exit__(exc_type, exc_value, traceback)

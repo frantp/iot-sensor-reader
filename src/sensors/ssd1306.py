@@ -32,13 +32,7 @@ class Reader(BaseReader):
         draw = ImageDraw.Draw(image)
         
         # Draw a black filled box to clear the image.
-        draw.rectangle((0,0,width,height), outline=0, fill=0)
-
-        # First define some constants to allow easy resizing of shapes.
-    	padding = -2
-    	top = padding
-    	bottom = height-padding
-        x = 0
+        draw.rectangle((0, 0, width, height), outline=0, fill=0)
 
         # Load default font.
         font = ImageFont.load_default()
@@ -46,16 +40,18 @@ class Reader(BaseReader):
         # Retrieve values.
         timestr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
-            ssid = subprocess.check_output("/sbin/iwgetid -r", shell = True)
+            ssid = subprocess.check_output("/sbin/iwgetid -r", shell = True) \
                 .decode("utf-8")
         except:
             ssid = "---"
         device_id = socket.gethostname()
 
         # Write text
-        draw.text((x, top + 0),               timestr,   font=font, fill=255)
-        draw.text((x, top + 16), "SSID:   " + ssid,      font=font, fill=255)
-        draw.text((x, top + 24), "DevID:  " + device_id, font=font, fill=255)
+        t, l = -2, 0
+        draw.text((l, t + 0),  " "       + timestr,     font=font, fill=255)
+        draw.text((l, t + 8),  "---------------------", font=font, fill=255)
+        draw.text((l, t + 16), "SSID:  " + ssid,        font=font, fill=255)
+        draw.text((l, t + 24), "DevID: " + device_id,   font=font, fill=255)
 
         # Display image.
         self._disp.image(image)
