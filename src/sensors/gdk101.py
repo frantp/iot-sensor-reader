@@ -1,7 +1,7 @@
-from sensors.base_sensor import BaseReader
+from sensors.base.base_sensor import BaseReader
 import time
 from collections import OrderedDict
-from smbus2 imoprt SMBus
+from smbus2 import SMBus
 
 
 _CMD_RESET                    = 0xA0
@@ -20,16 +20,14 @@ class Reader(BaseReader):
 
     def read(self):
         tm = int(time.time() * 1e9)
-        status, vibration = bus.read_i2c_block_data(
+        status, vibration = self._sensor.read_i2c_block_data(
             self._address, _CMD_READ_STATUS, 2)
-        minutes, seconds = bus.read_i2c_block_data(
-            self._address, _CMD_MEASUREMENT_TIME, 2)
-        minutes, seconds = bus.read_i2c_block_data(
-            self._address, _CMD_MEASUREMENT_TIME, 2)
-        gint10m, gdec10m = bus.read_i2c_block_data(
-            self._address, _CMD_MEASURING_VALUE_10M, 2)
-        gint1m, gdec1m = bus.read_i2c_block_data(
-            self._address, _CMD_MEASURING_VALUE_1M, 2)
+        minutes, seconds = self._sensor.read_i2c_block_data(
+            self._address, _CMD_READ_MEASUREMENT_TIME, 2)
+        gint10m, gdec10m = self._sensor.read_i2c_block_data(
+            self._address, _CMD_READ_MEASURING_VALUE_10M, 2)
+        gint1m, gdec1m = self._sensor.read_i2c_block_data(
+            self._address, _CMD_READ_MEASURING_VALUE_1M, 2)
         return tm, OrderedDict([
             ("status", status),
             ("vibration", vibration),
