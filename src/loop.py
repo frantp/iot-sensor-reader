@@ -35,6 +35,8 @@ def process(cfg, client, qos, measurement):
             sensor_module = importlib.import_module("sensors." + sensor)
             with getattr(sensor_module, "Reader")(**scfg) as reader:
                 timestamp, fields = reader.read()
+            if not fields:
+                continue
             tags = OrderedDict([
                 ("device", device),
                 ("sensor", sensor)
