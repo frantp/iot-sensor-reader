@@ -1,6 +1,6 @@
 import time
 from collections import OrderedDict
-from serial_sensor import SerialReader
+from sensors.serial_sensor import SerialReader
 from smbus2 imoprt SMBus
 
 
