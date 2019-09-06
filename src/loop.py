@@ -24,7 +24,7 @@ def process(cfg, client, qos, measurement):
     pin_list = [cfg[sensor][PIN_STR]
         for sensor in cfg if PIN_STR in cfg[sensor]]
     GPIO.setup(pin_list, GPIO.OUT)
-    device = client._client_id
+    device = client._client_id.decode("utf-8")
     for sensor in cfg:
         try:
             GPIO.output(pin_list, GPIO.HIGH)
@@ -41,8 +41,9 @@ def process(cfg, client, qos, measurement):
                 ("device", device),
                 ("sensor", sensor)
             ])
-            client.publish("{}/{}/{}".format(measurement, device, sensor),
-                format_msg(timestamp, measurement, tags, fields), qos=qos)
+            topic = "{}/{}/{}".format(measurement, device, sensor)
+            payload = format_msg(timestamp, measurement, tags, fields)
+            client.publish(topic, payload, qos)
         except:
             traceback.print_exc()
 
@@ -64,10 +65,11 @@ if __name__ == "__main__":
     mqtt_qos = cfg_mqtt.get("qos", 2)
     cfg_sensors = cfg.get("sensors", {})
 
-    print("Connecting to MQTT broker")
+    print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
 
     client = mqtt.Client(device, clean_session=False)
     client.connect(mqtt_host, mqtt_port)
+    client.loop_start()
 
     print("Starting readings")
 
@@ -78,3 +80,4 @@ if __name__ == "__main__":
             process(cfg_sensors, client, mqtt_qos, measurement)
     finally:
         GPIO.cleanup()
+        client.disconnect()
