@@ -20,28 +20,32 @@ def _checksum(res):
     return sum(res[2:]) & 0xFF
 
 
+def _check(res):
+    return res[-1:] != b"\xAB" or _checksum(res[:-2]) != res[-2]
+
+
 class Reader(SerialReader):
     def __init__(self, port):
         super().__init__(port, 9600)
         self._serial.write(_seq(_PASSIVE_CODES))
         res = self._serial.read(10)
-        if res[0:2] != b"\xAA\xC5\x05" or _checksum(res[:-1]) != res[-1]:
-            raise SerialException("Incorrect response")
+        if res[0:3] != b"\xAA\xC5\x02" or _check(res):
+            raise SerialException("Incorrect response: {}".format(res.hex()))
         self._serial.write(_seq(_SETWORK_CODES))
         res = self._serial.read(10)
-        if res[0:2] != b"\xAA\xC5\x06" or _checksum(res[:-1]) != res[-1]:
-            raise SerialException("Incorrect response")
+        if res[0:3] != b"\xAA\xC5\x06" or _check(res):
+            raise SerialException("Incorrect response: {}".format(res.hex()))
         self._serial.write(_seq(_SETCONT_CODES))
         res = self._serial.read(10)
-        if res[0:2] != b"\xAA\xC5\x08" or _checksum(res[:-1]) != res[-1]:
-            raise SerialException("Incorrect response")
+        if res[0:3] != b"\xAA\xC5\x08" or _check(res):
+            raise SerialException("Incorrect response: {}".format(res.hex()))
         
 
     def read(self):
         tm = int(time.time() * 1e9)
         self._serial.write(_seq(_REQUEST_CODES))
         res = self._serial.read(10)
-        if res[0:1] != b"\xAA\xC0" or _checksum(res[:-1]) != res[-1]:
+        if res[0:2] != b"\xAA\xC0" or _check(res):
             return tm, None
         pm25, pm10 = [x / 10 for x in struct.unpack("<HH", res[2:6])]
         return tm, OrderedDict([

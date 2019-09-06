@@ -11,6 +11,10 @@ def _checksum(res):
     return 0xFF - (sum(res[1:]) & 0xFF)
 
 
+def _check(res):
+    return _checksum(res[:-1]) != res[-1]
+
+
 class Reader(SerialReader):
     def __init__(self, port):
         super().__init__(port, 19200)
@@ -19,8 +23,8 @@ class Reader(SerialReader):
         tm = int(time.time() * 1e9)
         self._serial.write(_REQUEST_SEQ)
         res = self._serial.read(8)
-        if res[0:2] != b"\x02\x01\x04" or _checksum(res[:-1]) != res[-1]:
-            raise SerialException("Incorrect response")
+        if res[0:3] != b"\x02\x10\x04" or _check(res):
+            raise SerialException("Incorrect response: {}".format(res.hex()))
         status, minutes, rint, rdec = res[3:7]
         return tm, OrderedDict([
             ("status", status),
