@@ -13,19 +13,20 @@ import RPi.GPIO as GPIO
 import paho.mqtt.client as mqtt
 
 
+def sync_time(interval):
+    return interval - time.time() % interval
+
+
 def format_msg(timestamp, measurement, tags, fields):
     tstr = ",".join(["{}={}".format(k, v) for k, v in tags.items()])
     fstr = ",".join(["{}={}".format(k, v) for k, v in fields.items()])
     return "{},{} {} {}".format(measurement, tstr, fstr, timestamp)
 
 
-def process(cfg, client, qos, measurement):
-    PIN_STR = "ACTIVATION_PIN"
-    pin_list = [cfg[sensor][PIN_STR]
-        for sensor in cfg if PIN_STR in cfg[sensor]]
-    GPIO.setup(pin_list, GPIO.OUT)
+def process(cfg, client, qos, measurement, pin_list=[]):
     device = client._client_id.decode("utf-8")
     for sensor in cfg:
+        print("Reading sensor '{}'".format(sensor))
         try:
             GPIO.output(pin_list, GPIO.HIGH)
             scfg = cfg[sensor]
@@ -54,7 +55,6 @@ if __name__ == "__main__":
     cfg_file  = sys.argv[1]
 
     print("Reading configuration")
-
     cfg = toml.load(cfg_file)
     interval = int(cfg.get("interval", "5"))
     device = cfg.get("device") or socket.gethostname()
@@ -66,18 +66,23 @@ if __name__ == "__main__":
     cfg_sensors = cfg.get("sensors", {})
 
     print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
-
     client = mqtt.Client(device, clean_session=False)
     client.connect(mqtt_host, mqtt_port)
     client.loop_start()
 
-    print("Starting readings")
-
+    print("Configuring GPIO")
+    PIN_STR = "ACTIVATION_PIN"
     GPIO.setmode(GPIO.BCM)
+    pin_list = [cfg_sensors[sensor][PIN_STR]
+        for sensor in cfg_sensors if PIN_STR in cfg_sensors[sensor]]
+    GPIO.setup(pin_list, GPIO.OUT)
+
+    print("Starting readings")
     try:
         while True:
-            time.sleep(interval - time.time() % interval)
-            process(cfg_sensors, client, mqtt_qos, measurement)
+            print("Waiting {} seconds".format(sync_time(interval)))
+            time.sleep(sync_time(interval))
+            process(cfg_sensors, client, mqtt_qos, measurement, pin_list)
     finally:
         GPIO.cleanup()
         client.disconnect()
