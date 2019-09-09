@@ -28,5 +28,5 @@ class Reader(SerialReader):
         if res[0:2] != b"\xFF\x86" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         return tm, OrderedDict([
-            ("co2", (res[1] << 8) + res[2]),
+            ("co2", (res[2] << 8) + res[3]),
         ])
