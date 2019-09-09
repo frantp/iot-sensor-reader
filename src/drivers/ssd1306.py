@@ -1,4 +1,4 @@
-from sensors.base.base_sensor import BaseReader
+from drivers.base.base_driver import BaseDriver
 import datetime
 from collections import OrderedDict
 import board
@@ -9,12 +9,11 @@ import subprocess
 import socket
 
 
-class Reader(BaseReader):
+class Driver(BaseDriver):
     def __init__(self, model64, rst=None):
-        super().__init__()
         self._disp = SSD1306_128_64(rst) if model64 else SSD1306_128_32(rst)
 
-    def read(self):
+    def run(self):
         # Initialize library.
         self._disp.begin()
         

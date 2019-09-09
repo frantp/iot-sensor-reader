@@ -1,4 +1,4 @@
-from sensors.base.base_sensor import BaseReader
+from drivers.base.base_driver import BaseDriver
 import time
 from collections import OrderedDict
 from smbus2 import SMBus
@@ -12,13 +12,12 @@ _CMD_READ_MEASURING_VALUE_1M  = 0xB3
 _CMD_READ_FIRMWARE_VERSION    = 0xB4
 
 
-class Reader(BaseReader):
+class Driver(BaseDriver):
     def __init__(self, address=0x18):
-        super().__init__()
         self._sensor = SMBus(1)
         self._address = address
 
-    def read(self):
+    def run(self):
         tm = int(time.time() * 1e9)
         status, vibration = self._sensor.read_i2c_block_data(
             self._address, _CMD_READ_STATUS, 2)

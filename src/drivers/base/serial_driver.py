@@ -1,10 +1,9 @@
-from sensors.base.base_sensor import BaseReader
+from drivers.base.base_driver import BaseDriver
 from serial import Serial
 
 
-class SerialReader(BaseReader):
+class SerialDriver(BaseDriver):
     def __init__(self, *args, **kwargs):
-        super().__init__()
         self._serial = Serial(*args, **kwargs)
         self._serial.flush()
 

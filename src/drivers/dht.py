@@ -1,15 +1,14 @@
-from sensors.base.base_sensor import BaseReader
+from drivers.base.base_driver import BaseDriver
 import time
 from collections import OrderedDict
 from adafruit_dht import DHT11, DHT22
 
 
-class Reader(BaseReader):
+class Driver(BaseDriver):
     def __init__(self, pin, dht11):
-        super().__init__()
         self._sensor = DHT11(pin) if dht11 else DHT22(pin)
 
-    def read(self):
+    def run(self):
         return int(time.time() * 1e9), OrderedDict([
             ("temperature", self._sensor.temperature),
             ("humidity",    self._sensor.humidity)

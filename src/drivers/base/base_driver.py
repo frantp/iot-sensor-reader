@@ -1,7 +1,4 @@
-class BaseReader:
-    def __init__(self):
-        pass
-
+class BaseDriver:
     def __enter__(self):
         return self
 

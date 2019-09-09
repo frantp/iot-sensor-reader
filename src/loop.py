@@ -23,26 +23,26 @@ def format_msg(timestamp, measurement, tags, fields):
     return "{},{} {} {}".format(measurement, tstr, fstr, timestamp)
 
 
-def process(cfg, client, qos, measurement, pin_list=[]):
-    device = client._client_id.decode("utf-8")
-    for sensor in cfg:
-        print("Reading sensor '{}'".format(sensor))
+def run(cfg, client, qos, measurement, pin_list=[]):
+    device_id = client._client_id.decode("utf-8")
+    for driver_id in cfg:
+        print("Running driver '{}'".format(driver_id))
         try:
             GPIO.output(pin_list, GPIO.HIGH)
-            scfg = cfg[sensor]
-            if PIN_STR in scfg:
-                GPIO.output(scfg[PIN_STR], GPIO.LOW)
-                scfg = {k: v for k, v in scfg.items() if k != PIN_STR}
-            sensor_module = importlib.import_module("sensors." + sensor)
-            with getattr(sensor_module, "Reader")(**scfg) as reader:
-                timestamp, fields = reader.read()
+            dcfg = cfg[driver_id]
+            if PIN_STR in dcfg:
+                GPIO.output(dcfg[PIN_STR], GPIO.LOW)
+                dcfg = {k: v for k, v in dcfg.items() if k != PIN_STR}
+            driver_module = importlib.import_module("drivers." + driver_id)
+            with getattr(driver_module, "Driver")(**dcfg) as driver:
+                timestamp, fields = driver.run()
             if not fields:
                 continue
             tags = OrderedDict([
-                ("device", device),
-                ("sensor", sensor)
+                ("device", device_id),
+                ("sensor", driver_id)
             ])
-            topic = "{}/{}/{}".format(measurement, device, sensor)
+            topic = "{}/{}/{}".format(measurement, device_id, driver_id)
             payload = format_msg(timestamp, measurement, tags, fields)
             client.publish(topic, payload, qos)
         except:
@@ -58,12 +58,12 @@ if __name__ == "__main__":
     cfg = toml.load(cfg_file)
     interval = int(cfg.get("interval", "5"))
     device = cfg.get("device") or socket.gethostname()
-    measurement = cfg.get("measurement", "sensors")
+    measurement = cfg.get("measurement", "data")
     cfg_mqtt = cfg.get("mqtt", {})
     mqtt_host = cfg_mqtt.get("host", "localhost")
     mqtt_port = int(cfg_mqtt.get("port", "1883"))
     mqtt_qos = cfg_mqtt.get("qos", 2)
-    cfg_sensors = cfg.get("sensors", {})
+    cfg_drivers = cfg.get("drivers", {})
 
     print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
     client = mqtt.Client(device, clean_session=False)
@@ -73,8 +73,8 @@ if __name__ == "__main__":
     print("Configuring GPIO")
     PIN_STR = "ACTIVATION_PIN"
     GPIO.setmode(GPIO.BCM)
-    pin_list = [cfg_sensors[sensor][PIN_STR]
-        for sensor in cfg_sensors if PIN_STR in cfg_sensors[sensor]]
+    pin_list = [cfg_drivers[driver_id][PIN_STR]
+        for driver_id in cfg_drivers if PIN_STR in cfg_drivers[driver_id]]
     GPIO.setup(pin_list, GPIO.OUT)
 
     print("Starting readings")
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         while True:
             print("Waiting {} seconds".format(sync_time(interval)))
             time.sleep(sync_time(interval))
-            process(cfg_sensors, client, mqtt_qos, measurement, pin_list)
+            run(cfg_drivers, client, mqtt_qos, measurement, pin_list)
     finally:
         GPIO.cleanup()
         client.disconnect()

@@ -1,4 +1,4 @@
-from sensors.base.serial_sensor import SerialReader
+from drivers.base.serial_driver import SerialDriver
 import time
 from collections import OrderedDict
 from serial import SerialException
@@ -24,7 +24,7 @@ def _check(res):
     return res[-1:] != b"\xAB" or _checksum(res[:-2]) != res[-2]
 
 
-class Reader(SerialReader):
+class Driver(SerialDriver):
     def __init__(self, port):
         super().__init__(port, 9600)
         self._serial.write(_seq(_PASSIVE_CODES))
@@ -41,7 +41,7 @@ class Reader(SerialReader):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         
 
-    def read(self):
+    def run(self):
         tm = int(time.time() * 1e9)
         self._serial.write(_seq(_REQUEST_CODES))
         res = self._serial.read(10)
