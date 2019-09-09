@@ -28,6 +28,9 @@ def run(cfg, device_id, measurement, pin_list=[]):
             driver_module = importlib.import_module("drivers." + driver_id)
             with getattr(driver_module, "Driver")(**dcfg) as driver:
                 timestamp, fields = driver.run()
+            if fields:
+                fields = OrderedDict([(k, v) for k, v in fields.items() \
+                    if v is not None])
             if not fields:
                 continue
             tags = OrderedDict([
