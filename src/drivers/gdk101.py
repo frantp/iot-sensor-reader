@@ -17,6 +17,7 @@ class Driver(BaseDriver):
         super().__init__()
         self._address = address
 
+
     def run(self):
         tm = int(time.time() * 1e9)
         bus = SMBus(1)

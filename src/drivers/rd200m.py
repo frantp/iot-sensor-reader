@@ -19,6 +19,7 @@ class Driver(SerialDriver):
     def __init__(self, port):
         super().__init__(port, 19200)
 
+
     def run(self):
         tm = int(time.time() * 1e9)
         res = self._cmd(_REQUEST_SEQ, 8)

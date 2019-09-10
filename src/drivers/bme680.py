@@ -13,6 +13,7 @@ class Driver(BaseDriver):
         self._sensor = Adafruit_BME680_I2C(i2c, address=address,
             debug=debug, refresh_rate=refresh_rate)
 
+
     def run(self):
         return int(time.time() * 1e9), OrderedDict([
             ("temperature", self._sensor.temperature),

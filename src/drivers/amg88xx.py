@@ -12,9 +12,10 @@ class Driver(BaseDriver):
         i2c = busio.I2C(board.SCL, board.SDA)
         self._sensor = AMG88XX(i2c, addr=address)
 
+
     def run(self):
         tm, temp, px = int(time.time() * 1e9), \
-            self._sensor.temperature(), self._sensor.pixels()
+            self._sensor.temperature, self._sensor.pixels
         data = OrderedDict()
         data["temperature"] = temp
         for j, row in enumerate(px):

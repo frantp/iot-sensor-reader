@@ -1,5 +1,4 @@
 toml
-paho-mqtt
 RPi.GPIO
 smbus2
 pyserial

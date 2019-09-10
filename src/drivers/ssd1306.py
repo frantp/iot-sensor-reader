@@ -14,6 +14,7 @@ class Driver(BaseDriver):
         super().__init__()
         self._disp = SSD1306_128_64(rst) if model64 else SSD1306_128_32(rst)
 
+
     def run(self):
         # Initialize library.
         self._disp.begin()

@@ -5,7 +5,6 @@ import importlib
 import sys
 import toml
 import traceback
-
 import RPi.GPIO as GPIO
 
 
