@@ -14,21 +14,22 @@ _CMD_READ_FIRMWARE_VERSION    = 0xB4
 
 class Driver(BaseDriver):
     def __init__(self, address=0x18):
-        self._sensor = SMBus(1)
         self._address = address
 
     def run(self):
         tm = int(time.time() * 1e9)
-        status, vibration = self._sensor.read_i2c_block_data(
+        bus = SMBus(1)
+        status, vibration = bus.read_i2c_block_data(
             self._address, _CMD_READ_STATUS, 2)
-        minutes, seconds = self._sensor.read_i2c_block_data(
+        minutes, seconds = bus.read_i2c_block_data(
             self._address, _CMD_READ_MEASUREMENT_TIME, 2)
-        gint10m, gdec10m = self._sensor.read_i2c_block_data(
+        gint10m, gdec10m = bus.read_i2c_block_data(
             self._address, _CMD_READ_MEASURING_VALUE_10M, 2)
-        gint1m, gdec1m = self._sensor.read_i2c_block_data(
+        gint1m, gdec1m = bus.read_i2c_block_data(
             self._address, _CMD_READ_MEASURING_VALUE_1M, 2)
-        firmm, firms = self._sensor.read_i2c_block_data(
+        firmm, firms = bus.read_i2c_block_data(
             self._address, _CMD_READ_FIRMWARE_VERSION, 2)
+        bus.close()
         return tm, OrderedDict([
             ("status", status),
             ("vibration", vibration),
