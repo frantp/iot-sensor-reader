@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from drivers.base.utils import ActivationContext
 from collections import OrderedDict
 import importlib
 import sys
@@ -28,8 +29,8 @@ def run(cfg):
                     activation_pin = dcfg[PIN_STR]
                     dcfg = {k: v for k, v in dcfg.items() if k != PIN_STR}
                 driver_module = importlib.import_module("drivers." + driver_id)
-                driver_class = getattr(driver_module, "Driver")
-                with driver_class(**dcfg).activate(activation_pin) as driver:
+                with ActivationContext(activation_pin), \
+                     getattr(driver_module, "Driver")(**dcfg) as driver:
                     timestamp, fields = driver.run()
                 if fields:
                     fields = OrderedDict([(k, v) for k, v in fields.items() \
