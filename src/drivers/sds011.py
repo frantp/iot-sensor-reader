@@ -1,4 +1,4 @@
-from drivers.base.serial_driver import SerialDriver
+from drivers.base import SerialDriver
 import time
 from collections import OrderedDict
 from serial import SerialException

@@ -1,4 +1,4 @@
-from drivers.base.base_driver import BaseDriver
+from drivers.base import I2CDriver
 import time
 from collections import OrderedDict
 import board
@@ -6,7 +6,7 @@ import busio
 from adafruit_bme680 import Adafruit_BME680_I2C
 
 
-class Driver(BaseDriver):
+class Driver(I2CDriver):
     def __init__(self, address=0x77, debug=False, refresh_rate=10):
         super().__init__()
         i2c = busio.I2C(board.SCL, board.SDA)

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-from drivers.base.utils import ActivationContext
+from drivers.base import ActivationContext
 from collections import OrderedDict
 import importlib
+import RPi.GPIO as GPIO
 import sys
 import toml
 import traceback
-import RPi.GPIO as GPIO
 
 
 def format_msg(timestamp, measurement, fields):

@@ -1,4 +1,4 @@
-from drivers.base.base_driver import BaseDriver
+from drivers.base import I2CDriver
 import time
 from collections import OrderedDict
 import board
@@ -6,7 +6,7 @@ import busio
 from adafruit_tsl2591 import TSL2591
 
 
-class Driver(BaseDriver):
+class Driver(I2CDriver):
     def __init__(self, address=0x29, gain=None, integration_time=None):
         super().__init__()
         i2c = busio.I2C(board.SCL, board.SDA)
