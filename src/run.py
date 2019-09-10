@@ -20,16 +20,17 @@ def run(cfg):
     pin_list = [driver_cfg[PIN_STR]
         for driver_id in cfg
         for driver_cfg in cfg[driver_id] if PIN_STR in driver_cfg]
-    GPIO.setup(pin_list, GPIO.OUT)
+    GPIO.setup(pin_list, GPIO.OUT, initial=GPIO.HIGH)
     for driver_id in cfg:
         try:
             for dcfg in cfg[driver_id]:
-                GPIO.output(pin_list, GPIO.HIGH)
+                activation_pin = None
                 if PIN_STR in dcfg:
-                    GPIO.output(dcfg[PIN_STR], GPIO.LOW)
+                    activation_pin = dcfg[PIN_STR]
                     dcfg = {k: v for k, v in dcfg.items() if k != PIN_STR}
                 driver_module = importlib.import_module("drivers." + driver_id)
-                with getattr(driver_module, "Driver")(**dcfg) as driver:
+                driver_class = getattr(driver_module, "Driver")
+                with driver_class(**dcfg).activate(activation_pin) as driver:
                     timestamp, fields = driver.run()
                 if fields:
                     fields = OrderedDict([(k, v) for k, v in fields.items() \

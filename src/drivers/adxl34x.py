@@ -8,6 +8,7 @@ from adafruit_adxl34x import ADXL345
 
 class Driver(BaseDriver):
     def __init__(self, address=0x53):
+        super().__init__()
         i2c = busio.I2C(board.SCL, board.SDA)
         self._sensor = ADXL345(i2c, address=address)
 

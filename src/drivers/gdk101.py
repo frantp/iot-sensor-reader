@@ -14,6 +14,7 @@ _CMD_READ_FIRMWARE_VERSION    = 0xB4
 
 class Driver(BaseDriver):
     def __init__(self, address=0x18):
+        super().__init__()
         self._address = address
 
     def run(self):

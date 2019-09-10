@@ -11,6 +11,7 @@ import socket
 
 class Driver(BaseDriver):
     def __init__(self, model64, rst=None):
+        super().__init__()
         self._disp = SSD1306_128_64(rst) if model64 else SSD1306_128_32(rst)
 
     def run(self):

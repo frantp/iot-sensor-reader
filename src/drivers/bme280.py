@@ -8,6 +8,7 @@ from adafruit_bme280 import Adafruit_BME280_I2C
 
 class Driver(BaseDriver):
     def __init__(self, address=0x77):
+        super().__init__()
         i2c = busio.I2C(board.SCL, board.SDA)
         self._sensor = Adafruit_BME280_I2C(i2c, address=address)
 

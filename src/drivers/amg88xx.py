@@ -8,6 +8,7 @@ from adafruit_amg88xx import AMG88XX
 
 class Driver(BaseDriver):
     def __init__(self, address=0x69):
+        super().__init__()
         i2c = busio.I2C(board.SCL, board.SDA)
         self._sensor = AMG88XX(i2c, addr=address)
 

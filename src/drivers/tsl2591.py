@@ -8,6 +8,7 @@ from adafruit_tsl2591 import TSL2591
 
 class Driver(BaseDriver):
     def __init__(self, address=0x29, gain=None, integration_time=None):
+        super().__init__()
         i2c = busio.I2C(board.SCL, board.SDA)
         self._sensor = TSL2591(i2c, address)
         if gain:

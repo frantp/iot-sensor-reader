@@ -5,6 +5,7 @@ import time
 
 class SerialDriver(BaseDriver):
     def __init__(self, *args, **kwargs):
+        super().__init__()
         self._serial = Serial(timeout=1, *args, **kwargs)
         self._serial.reset_input_buffer()
         self._serial.reset_output_buffer()
