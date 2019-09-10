@@ -23,8 +23,7 @@ class Driver(SerialDriver):
 
     def run(self):
         tm = int(time.time() * 1e9)
-        self._serial.write(_REQUEST_SEQ)
-        res = self._serial.read(9)
+        res = self._cmd(_REQUEST_SEQ, 9)
         if res[0:2] != b"\xFF\x86" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         return tm, OrderedDict([

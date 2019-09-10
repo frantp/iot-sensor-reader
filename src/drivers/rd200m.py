@@ -21,8 +21,7 @@ class Driver(SerialDriver):
 
     def run(self):
         tm = int(time.time() * 1e9)
-        self._serial.write(_REQUEST_SEQ)
-        res = self._serial.read(8)
+        res = self._cmd(_REQUEST_SEQ, 8)
         if res[0:3] != b"\x02\x10\x04" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         status, minutes, rint, rdec = res[3:7]

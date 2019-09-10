@@ -27,24 +27,20 @@ def _check(res):
 class Driver(SerialDriver):
     def __init__(self, port):
         super().__init__(port, 9600)
-        self._serial.write(_seq(_PASSIVE_CODES))
-        res = self._serial.read(10)
+        res = self._cmd(_seq(_PASSIVE_CODES), 10)
         if res[0:3] != b"\xAA\xC5\x02" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
-        self._serial.write(_seq(_SETWORK_CODES))
-        res = self._serial.read(10)
+        res = self._cmd(_seq(_SETWORK_CODES), 10)
         if res[0:3] != b"\xAA\xC5\x06" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
-        self._serial.write(_seq(_SETCONT_CODES))
-        res = self._serial.read(10)
+        res = self._cmd(_seq(_SETCONT_CODES), 10)
         if res[0:3] != b"\xAA\xC5\x08" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         
 
     def run(self):
         tm = int(time.time() * 1e9)
-        self._serial.write(_seq(_REQUEST_CODES))
-        res = self._serial.read(10)
+        res = self._cmd(_seq(_REQUEST_CODES), 10)
         if res[0:2] != b"\xAA\xC0" or _check(res):
             return tm, None
         pm25, pm10 = [x / 10 for x in struct.unpack("<HH", res[2:6])]

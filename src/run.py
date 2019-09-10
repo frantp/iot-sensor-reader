@@ -11,6 +11,9 @@ import traceback
 import RPi.GPIO as GPIO
 
 
+PIN_STR = "ACTIVATION_PIN"
+
+
 def format_msg(timestamp, measurement, tags, fields):
     tstr = ",".join(["{}={}".format(k, v) for k, v in tags.items()])
     fstr = ",".join(["{}={}".format(k, v) for k, v in fields.items()])
@@ -55,7 +58,6 @@ if __name__ == "__main__":
     cfg_drivers = cfg.get("drivers", {})
 
     # Configure GPIO
-    PIN_STR = "ACTIVATION_PIN"
     GPIO.setmode(GPIO.BCM)
     pin_list = [cfg_drivers[driver_id][PIN_STR]
         for driver_id in cfg_drivers if PIN_STR in cfg_drivers[driver_id]]
