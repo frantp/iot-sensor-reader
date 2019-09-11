@@ -44,7 +44,7 @@ class Driver(SerialDriver):
         if res[0:2] != b"\xAA\xC0" or _check(res):
             return tm, None
         pm25, pm10 = [x / 10 for x in struct.unpack("<HH", res[2:6])]
-        return tm, OrderedDict([
+        return [(tm, OrderedDict([
             ("pm25", pm25),
             ("pm10", pm10)
-        ])
+        ]))]

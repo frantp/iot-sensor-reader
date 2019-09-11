@@ -14,7 +14,7 @@ class Driver(I2CDriver):
 
 
     def run(self):
-        return int(time.time() * 1e9), OrderedDict([
+        return [(int(time.time() * 1e9), OrderedDict([
             ("ambient_temperature", self._sensor.ambient_temperature),
             ("object_temperature", self._sensor.object_temperature)
-        ])
+        ]))]

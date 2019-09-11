@@ -32,13 +32,14 @@ def run(cfg):
                 driver_module = importlib.import_module("drivers." + driver_id)
                 with ActivationContext(activation_pin), \
                      getattr(driver_module, "Driver")(**dcfg) as driver:
-                    timestamp, fields = driver.run()
-                if fields:
-                    fields = OrderedDict([(k, v) for k, v in fields.items() \
-                        if v is not None])
-                if not fields:
-                    continue
-                print(format_msg(timestamp, driver_id, fields))
+                    res = driver.run()
+                for timestamp, fields in res:
+                    if fields:
+                        fields = OrderedDict([(k, v) for k, v in fields.items() \
+                            if v is not None])
+                    if not fields:
+                        continue
+                    print(format_msg(timestamp, driver_id, fields))
         except:
             traceback.print_exc()
 

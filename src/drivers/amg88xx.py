@@ -21,4 +21,4 @@ class Driver(I2CDriver):
         for j, row in enumerate(px):
             for i, val in enumerate(row):
                 data["px{}{}".format(i, j)] = val
-        return tm, data
+        return [(tm, data)]

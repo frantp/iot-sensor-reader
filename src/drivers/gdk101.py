@@ -32,11 +32,11 @@ class Driver(I2CDriver):
         firmm, firms = bus.read_i2c_block_data(
             self._address, _CMD_READ_FIRMWARE_VERSION, 2)
         bus.close()
-        return tm, OrderedDict([
+        return [(tm, OrderedDict([
             ("status", status),
             ("vibration", vibration),
             ("meastime", 60 * minutes + seconds),
             ("gamma10", gint10m + gdec10m / 100),
             ("gamma1", gint1m + gdec1m / 100),
             ("firmware", "{}.{}".format(firmm, firms)),
-        ])
+        ]))]
