@@ -3,12 +3,13 @@ filelock
 RPi.GPIO
 smbus2
 pyserial
-adafruit-circuitpython-adxl34x # adxl34x
-adafruit-circuitpython-amg88xx # amg88xx
-adafruit-circuitpython-bme280  # bme280
-adafruit-circuitpython-bme680  # bme680
-adafruit-circuitpython-dht     # dht
-adafruit-circuitpython-tsl2561 # tsl2561
-adafruit-circuitpython-tsl2591 # tsl2591
-Adafruit-SSD1306               # ssd1306
-Pillow                         # ssd1306
+adafruit-circuitpython-adxl34x  # adxl34x
+adafruit-circuitpython-amg88xx  # amg88xx
+adafruit-circuitpython-bme280   # bme280
+adafruit-circuitpython-bme680   # bme680
+adafruit-circuitpython-dht      # dht
+adafruit-circuitpython-mlx90614 # mlx90614
+adafruit-circuitpython-tsl2561  # tsl2561
+adafruit-circuitpython-tsl2591  # tsl2591
+Adafruit-SSD1306                # ssd1306
+Pillow                          # ssd1306
