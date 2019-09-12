@@ -65,6 +65,10 @@ class DriverBase:
             self._lock.release()
 
 
+    def run(self):
+        raise NotImplementedError()
+
+
 class I2CDriver(DriverBase):
     def __init__(self):
         super().__init__("/run/lock/sreader/i2c.lock")
@@ -94,8 +98,8 @@ class SerialDriver(DriverBase):
         super().__exit__(exc_type, exc_value, traceback)
 
 
-    def _cmd(self, data, size=1):
-        self._serial.write(data)
+    def _cmd(self, cmd, size=1):
+        self._serial.write(cmd)
         self._serial.flush()
         time.sleep(0.1)
         return self._serial.read(size)

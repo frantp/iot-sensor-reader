@@ -1,4 +1,4 @@
-from drivers.base import I2CDriver
+from drivers.utils import I2CDriver
 import time
 from collections import OrderedDict
 from smbus2 import SMBus

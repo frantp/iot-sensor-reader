@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from drivers.base import ActivationContext
+from drivers.utils import ActivationContext
 from collections import OrderedDict
 import importlib
 import RPi.GPIO as GPIO
@@ -33,13 +33,15 @@ def run(cfg):
                 with ActivationContext(activation_pin), \
                      getattr(driver_module, "Driver")(**dcfg) as driver:
                     res = driver.run()
-                for timestamp, fields in res:
-                    if fields:
-                        fields = OrderedDict([(k, v) for k, v in fields.items() \
-                            if v is not None])
-                    if not fields:
+                    if not res:
                         continue
-                    print(format_msg(timestamp, driver_id, fields))
+                    for tm, fields in res:
+                        if fields:
+                            fields = OrderedDict([(k, v) \
+                                for k, v in fields.items() if v is not None])
+                        if not fields:
+                            continue
+                        print(format_msg(tm, driver_id, fields))
         except:
             traceback.print_exc()
 

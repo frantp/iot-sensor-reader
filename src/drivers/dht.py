@@ -1,4 +1,4 @@
-from drivers.base import DriverBase
+from drivers.utils import DriverBase
 import time
 from collections import OrderedDict
 from adafruit_dht import DHT11, DHT22
