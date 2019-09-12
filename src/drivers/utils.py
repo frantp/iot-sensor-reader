@@ -1,6 +1,6 @@
-import os
 from filelock import FileLock
 import importlib
+import os
 import RPi.GPIO as GPIO
 from serial import Serial
 import time
@@ -15,6 +15,17 @@ def get_lock(lock_file):
     if not os.path.isfile(lock_file):
         os.mknod(lock_file)
     return FileLock(lock_file)
+
+
+def find(obj, key):
+    if isinstance(obj, dict):
+        if key in obj:
+            yield obj[key]
+        for v in obj.values():
+            yield from find(v, key)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from find(v, key)
 
 
 def run_drivers(cfg):
@@ -40,9 +51,7 @@ def run_drivers(cfg):
 class GPIOContext:
     def __init__(self, cfg):
         GPIO.setmode(GPIO.BCM)
-        pin_list = [driver_cfg[ACT_PIN_ID]
-            for driver_id in cfg
-            for driver_cfg in cfg[driver_id] if ACT_PIN_ID in driver_cfg]
+        pin_list = list(find(cfg, ACT_PIN_ID))
         GPIO.setup(pin_list, GPIO.OUT, initial=GPIO.HIGH)
 
 
