@@ -1,8 +1,13 @@
 import os
 from filelock import FileLock
+import importlib
 import RPi.GPIO as GPIO
 from serial import Serial
 import time
+import traceback
+
+
+ACT_PIN_ID = "ACTIVATION_PIN"
 
 
 def get_lock(lock_file):
@@ -10,6 +15,47 @@ def get_lock(lock_file):
     if not os.path.isfile(lock_file):
         os.mknod(lock_file)
     return FileLock(lock_file)
+
+
+def run_drivers(cfg):
+    for driver_id in cfg:
+        try:
+            for dcfg in cfg[driver_id]:
+                activation_pin = None
+                if ACT_PIN_ID in dcfg:
+                    activation_pin = dcfg[ACT_PIN_ID]
+                    dcfg = {k: v for k, v in dcfg.items() if k != ACT_PIN_ID}
+                driver_module = importlib.import_module("drivers." + driver_id)
+                with ActivationContext(activation_pin), \
+                     getattr(driver_module, "Driver")(**dcfg) as driver:
+                    res = driver.run()
+                    if not res:
+                        continue
+                    for tm, fields in res:
+                        yield driver_id, tm, fields
+        except:
+            traceback.print_exc()
+
+
+class GPIOContext:
+    def __init__(self, cfg):
+        GPIO.setmode(GPIO.BCM)
+        pin_list = [driver_cfg[ACT_PIN_ID]
+            for driver_id in cfg
+            for driver_cfg in cfg[driver_id] if ACT_PIN_ID in driver_cfg]
+        GPIO.setup(pin_list, GPIO.OUT, initial=GPIO.HIGH)
+
+
+    def close(self):
+        GPIO.cleanup()
+
+
+    def __enter__(self):
+        return self
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 
 class ActivationContext:
