@@ -53,15 +53,14 @@ class Driver(I2CDriver):
 
 
     def _move(self, bus, cmdid, value):
-        TOL = 1
         cmd = "M{}{:03d}$".format(cmdid, value)
         bus.write_i2c_block_data(self._address, ord("@"), cmd.encode("ascii"))
         while True:
             time.sleep(self._polling_interval)
             res = self._read_state(bus, cmdid)
-            if (cmdid == self._Z_CMD    and _close(res, value, TOL)) or \
-               (cmdid == self._PAN_CMD  and _close(res, value, TOL)) or \
-               (cmdid == self._TILT_CMD and _close(res, value, TOL)):
+            if (cmdid == self._Z_CMD    and _close(res, value, 0)) or \
+               (cmdid == self._PAN_CMD  and _close(res, value, 1)) or \
+               (cmdid == self._TILT_CMD and _close(res, value, 1)):
                 break
         time.sleep(0.1)
 
