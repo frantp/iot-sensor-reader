@@ -17,5 +17,5 @@ class Driver(I2CDriver):
         return [(int(time.time() * 1e9), OrderedDict([
             ("temperature", self._sensor.temperature),
             ("humidity",    self._sensor.humidity),
-            ("pressure",    self._sensor.pressure)
+            ("pressure",    self._sensor.pressure),
         ]))]

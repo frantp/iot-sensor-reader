@@ -116,8 +116,7 @@ class DriverBase:
 
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if self._lock:
-            self._lock.release()
+        self.close()
 
 
     def run(self):

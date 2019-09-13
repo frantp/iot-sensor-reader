@@ -21,5 +21,5 @@ class Driver(I2CDriver):
         return [(int(time.time() * 1e9), OrderedDict([
             ("lux", self._sensor.lux),
             ("visible", self._sensor.visible),
-            ("infrared", self._sensor.infrared)
+            ("infrared", self._sensor.infrared),
         ]))]

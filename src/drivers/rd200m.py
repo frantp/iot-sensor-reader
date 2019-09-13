@@ -29,5 +29,5 @@ class Driver(SerialDriver):
         return [(tm, OrderedDict([
             ("status", status),
             ("meastime", 60 * minutes),
-            ("radon", (rint + rdec / 100) * 37)  # pCi/L -> Bq/m^3
+            ("radon", (rint + rdec / 100) * 37),  # pCi/L -> Bq/m^3
         ]))]

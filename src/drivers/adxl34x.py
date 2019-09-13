@@ -18,5 +18,5 @@ class Driver(I2CDriver):
         return [(tm, OrderedDict([
             ("x", x),
             ("y", y),
-            ("z", z)
+            ("z", z),
         ]))]

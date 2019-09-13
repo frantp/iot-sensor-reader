@@ -19,5 +19,5 @@ class Driver(I2CDriver):
             ("temperature", self._sensor.temperature),
             ("gas",         self._sensor.gas),
             ("humidity",    self._sensor.humidity),
-            ("pressure",    self._sensor.pressure)
+            ("pressure",    self._sensor.pressure),
         ]))]
