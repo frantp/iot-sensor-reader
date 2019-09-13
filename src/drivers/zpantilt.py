@@ -16,6 +16,7 @@ class Driver(I2CDriver):
     def __init__(self, address=0x16, movement=None, drivers=None,
         polling_interval=1):
         super().__init__()
+        self._address = address
         self._movement = movement
         self._drivers = drivers
         self._polling_interval = polling_interval
@@ -24,11 +25,11 @@ class Driver(I2CDriver):
     def run(self):
         bus = SMBus(1)
         self._reset(bus)
-        for z in _get_range(self._movement.z):
+        for z in _get_range(self._movement["z"]):
             self._move(bus, self._CMD_ZZZ, z)
-            for pan in _get_range(self._movement.pan):
+            for pan in _get_range(self._movement["pan"]):
                 self._move(bus, self._CMD_PAN, pan)
-                for tilt in _get_range(self._movement.tilt):
+                for tilt in _get_range(self._movement["tilt"]):
                     self._move(bus, self._CMD_TLT, tilt)
                     if self._drivers:
                         res_zzz = self._read_state(bus, self._CMD_ZZZ)
@@ -58,9 +59,9 @@ class Driver(I2CDriver):
         while True:
             time.sleep(self._polling_interval)
             res = self._read_state(bus, cmdid)
-            if (cmdid == self._Z_CMD    and _close(res, value, 0)) or \
-               (cmdid == self._PAN_CMD  and _close(res, value, 1)) or \
-               (cmdid == self._TILT_CMD and _close(res, value, 1)):
+            if (cmdid == self._CMD_ZZZ and _close(res, value, 0)) or \
+               (cmdid == self._CMD_PAN and _close(res, value, 1)) or \
+               (cmdid == self._CMD_TLT and _close(res, value, 1)):
                 break
         time.sleep(0.1)
 
@@ -79,7 +80,7 @@ class Driver(I2CDriver):
 
 
 def _get_range(cfg):
-    return range(cfg.start, cfg.stop, cfg.step)
+    return range(cfg["start"], cfg["stop"] + 1, cfg["step"])
 
 
 def _close(a, b, tolerance):
