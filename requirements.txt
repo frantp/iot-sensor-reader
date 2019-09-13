@@ -1,4 +1,5 @@
 toml
+paho-mqtt
 filelock
 RPi.GPIO
 smbus2
