@@ -7,6 +7,7 @@ from Adafruit_SSD1306 import SSD1306_128_32, SSD1306_128_64
 from PIL import Image, ImageDraw, ImageFont
 import subprocess
 import socket
+import time
 
 
 class Driver(DriverBase):
@@ -58,4 +59,4 @@ class Driver(DriverBase):
         self._disp.image(image)
         self._disp.display()
 
-        return None
+        return (self.sid(), int(time.time() * 1e9), None)

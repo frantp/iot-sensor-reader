@@ -18,7 +18,7 @@ class Driver(I2CDriver):
 
 
     def run(self):
-        return [(int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
             ("lux", self._sensor.lux),
             ("broadband", self._sensor.broadband),
             ("infrared", self._sensor.infrared),

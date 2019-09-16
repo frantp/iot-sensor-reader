@@ -11,7 +11,7 @@ class Driver(DriverBase):
 
 
     def run(self):
-        return [(int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
             ("temperature", self._sensor.temperature),
             ("humidity",    self._sensor.humidity),
         ]))]

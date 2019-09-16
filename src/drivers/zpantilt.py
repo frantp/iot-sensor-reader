@@ -48,7 +48,7 @@ class Driver(I2CDriver):
                             ("battery2_state", (res_bt2 & 0xC0) >> 6),
                             ("z_state"       , res_zst),
                         ])
-                        yield int(time.time() * 1e9), state
+                        yield self.sid(), int(time.time() * 1e9), state
                         yield from run_drivers(self._drivers)
         bus.close()
 

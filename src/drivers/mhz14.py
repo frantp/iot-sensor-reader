@@ -27,6 +27,6 @@ class Driver(SerialDriver):
         res = self._cmd(_REQUEST_SEQ, 9)
         if res[0:2] != b"\xFF\x86" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
-        return [(tm, OrderedDict([
+        return [(self.sid(), tm, OrderedDict([
             ("co2", (res[2] << 8) + res[3]),
         ]))]

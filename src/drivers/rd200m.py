@@ -26,7 +26,7 @@ class Driver(SerialDriver):
         if res[0:3] != b"\x02\x10\x04" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         status, minutes, rint, rdec = res[3:7]
-        return [(tm, OrderedDict([
+        return [(self.sid(), tm, OrderedDict([
             ("status", status),
             ("meastime", 60 * minutes),
             ("radon", (rint + rdec / 100) * 37),  # pCi/L -> Bq/m^3

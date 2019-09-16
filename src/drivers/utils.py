@@ -42,8 +42,7 @@ def run_drivers(cfg):
                     res = driver.run()
                     if not res:
                         continue
-                    for tm, fields in res:
-                        yield driver_id, tm, fields
+                    yield from res
         except:
             traceback.print_exc()
 
@@ -117,6 +116,10 @@ class DriverBase:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+
+
+    def sid(self):
+        return self.__class__.__module__.split(".")[-1]
 
 
     def run(self):
