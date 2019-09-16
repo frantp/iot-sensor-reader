@@ -14,12 +14,13 @@ class Driver(I2CDriver):
 
 
     def __init__(self, address=0x16, movement=None, drivers=None,
-        polling_interval=0.1):
+        interval=0.1, check_move=True):
         super().__init__()
         self._address = address
         self._movement = movement
         self._drivers = drivers
-        self._polling_interval = polling_interval
+        self._interval = interval
+        self._check_move = check_move
         self._bus = SMBus(1)
 
 
@@ -58,13 +59,16 @@ class Driver(I2CDriver):
         cmd = "M{}{:03d}$".format(cmdid, value)
         self._bus.write_i2c_block_data(self._address,
             ord("@"), cmd.encode("ascii"))
-        while True:
-            time.sleep(self._polling_interval)
-            res = self._read_state(cmdid)
-            if (cmdid == self._CMD_ZZZ and _close(res, value, 0)) or \
-               (cmdid == self._CMD_PAN and _close(res, value, 1)) or \
-               (cmdid == self._CMD_TLT and _close(res, value, 1)):
-                break
+        if self._check_move:
+            while True:
+                time.sleep(self._interval)
+                res = self._read_state(cmdid)
+                if (cmdid == self._CMD_ZZZ and _close(res, value, 1)) or \
+                   (cmdid == self._CMD_PAN and _close(res, value, 1)) or \
+                   (cmdid == self._CMD_TLT and _close(res, value, 1)):
+                    break
+        else:
+            time.sleep(self._interval)
         time.sleep(0.1)
 
 
