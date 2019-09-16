@@ -20,24 +20,24 @@ class Driver(I2CDriver):
         self._movement = movement
         self._drivers = drivers
         self._polling_interval = polling_interval
+        self._bus = SMBus(1)
 
 
     def run(self):
-        bus = SMBus(1)
-        self._reset(bus)
+        self._reset()
         for z in _get_range(self._movement["z"]):
-            self._move(bus, self._CMD_ZZZ, z)
+            self._move(self._CMD_ZZZ, z)
             for pan in _get_range(self._movement["pan"]):
-                self._move(bus, self._CMD_PAN, pan)
+                self._move(self._CMD_PAN, pan)
                 for tilt in _get_range(self._movement["tilt"]):
-                    self._move(bus, self._CMD_TLT, tilt)
+                    self._move(self._CMD_TLT, tilt)
                     if self._drivers:
-                        res_zzz = self._read_state(bus, self._CMD_ZZZ)
-                        res_pan = self._read_state(bus, self._CMD_PAN)
-                        res_tlt = self._read_state(bus, self._CMD_TLT)
-                        res_bt1 = self._read_state(bus, self._CMD_BT1)
-                        res_bt2 = self._read_state(bus, self._CMD_BT2)
-                        res_zst = self._read_state(bus, self._CMD_ZST)
+                        res_zzz = self._read_state(self._CMD_ZZZ)
+                        res_pan = self._read_state(self._CMD_PAN)
+                        res_tlt = self._read_state(self._CMD_TLT)
+                        res_bt1 = self._read_state(self._CMD_BT1)
+                        res_bt2 = self._read_state(self._CMD_BT2)
+                        res_zst = self._read_state(self._CMD_ZST)
                         state = OrderedDict([
                             ("z"             , res_zzz),
                             ("pan"           , res_pan),
@@ -49,16 +49,18 @@ class Driver(I2CDriver):
                             ("z_state"       , res_zst),
                         ])
                         yield self.sid(), int(time.time() * 1e9), state
+                        self._bus.close()
                         yield from run_drivers(self._drivers)
-        bus.close()
+                        self._bus.open(1)
 
 
-    def _move(self, bus, cmdid, value):
+    def _move(self, cmdid, value):
         cmd = "M{}{:03d}$".format(cmdid, value)
-        bus.write_i2c_block_data(self._address, ord("@"), cmd.encode("ascii"))
+        self._bus.write_i2c_block_data(self._address,
+            ord("@"), cmd.encode("ascii"))
         while True:
             time.sleep(self._polling_interval)
-            res = self._read_state(bus, cmdid)
+            res = self._read_state(cmdid)
             if (cmdid == self._CMD_ZZZ and _close(res, value, 0)) or \
                (cmdid == self._CMD_PAN and _close(res, value, 1)) or \
                (cmdid == self._CMD_TLT and _close(res, value, 1)):
@@ -66,17 +68,18 @@ class Driver(I2CDriver):
         time.sleep(0.1)
 
 
-    def _reset(self, bus):
-        self._move(bus, self._CMD_TLT, 0)
-        self._move(bus, self._CMD_PAN, 0)
-        self._move(bus, self._CMD_ZZZ, 0)
+    def _reset(self):
+        self._move(self._CMD_TLT, 0)
+        self._move(self._CMD_PAN, 0)
+        self._move(self._CMD_ZZZ, 0)
 
 
-    def _read_state(self, bus, cmdid):
+    def _read_state(self, cmdid):
         cmd = "S{:<02}$".format(cmdid)
-        bus.write_i2c_block_data(self._address, ord("@"), cmd.encode("ascii"))
+        self._bus.write_i2c_block_data(self._address,
+            ord("@"), cmd.encode("ascii"))
         time.sleep(0.1)
-        return int(bus.read_byte(self._address))
+        return int(self._bus.read_byte(self._address))
 
 
 def _get_range(cfg):
