@@ -14,7 +14,7 @@ class Driver(I2CDriver):
 
 
     def __init__(self, address=0x16, movement=None, drivers=None,
-        polling_interval=1):
+        polling_interval=0.1):
         super().__init__()
         self._address = address
         self._movement = movement
