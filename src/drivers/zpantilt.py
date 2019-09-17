@@ -32,27 +32,29 @@ class Driver(I2CDriver):
                 self._move(self._CMD_PAN, pan)
                 for tilt in _get_range(self._movement["tilt"]):
                     self._move(self._CMD_TLT, tilt)
+                    res_zzz = self._read_state(self._CMD_ZZZ)
+                    res_pan = self._read_state(self._CMD_PAN)
+                    res_tlt = self._read_state(self._CMD_TLT)
+                    res_bt1 = self._read_state(self._CMD_BT1)
+                    res_bt2 = self._read_state(self._CMD_BT2)
+                    res_zst = self._read_state(self._CMD_ZST)
+                    state = OrderedDict([
+                        ("z"             , res_zzz),
+                        ("pan"           , res_pan),
+                        ("tilt"          , res_tlt),
+                        ("battery1"      , res_bt1 & 0x3F),
+                        ("battery2"      , res_bt2 & 0x3F),
+                        ("battery1_state", (res_bt1 & 0xC0) >> 6),
+                        ("battery2_state", (res_bt2 & 0xC0) >> 6),
+                        ("z_state"       , res_zst),
+                    ])
+                    yield self.sid(), int(time.time() * 1e9), state
                     if self._drivers:
-                        res_zzz = self._read_state(self._CMD_ZZZ)
-                        res_pan = self._read_state(self._CMD_PAN)
-                        res_tlt = self._read_state(self._CMD_TLT)
-                        res_bt1 = self._read_state(self._CMD_BT1)
-                        res_bt2 = self._read_state(self._CMD_BT2)
-                        res_zst = self._read_state(self._CMD_ZST)
-                        state = OrderedDict([
-                            ("z"             , res_zzz),
-                            ("pan"           , res_pan),
-                            ("tilt"          , res_tlt),
-                            ("battery1"      , res_bt1 & 0x3F),
-                            ("battery2"      , res_bt2 & 0x3F),
-                            ("battery1_state", (res_bt1 & 0xC0) >> 6),
-                            ("battery2_state", (res_bt2 & 0xC0) >> 6),
-                            ("z_state"       , res_zst),
-                        ])
-                        yield self.sid(), int(time.time() * 1e9), state
                         self._bus.close()
+                        self._lock.release()
                         yield from run_drivers(self._drivers)
-                        self._bus.open(1)
+                        self._lock.acquire()
+                        self._bus = SMBus(1)
 
 
     def _move(self, cmdid, value):
