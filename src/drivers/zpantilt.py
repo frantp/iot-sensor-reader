@@ -2,6 +2,7 @@ from drivers.utils import I2CDriver, run_drivers
 import time
 from collections import OrderedDict
 from smbus2 import SMBus
+import traceback
 
 
 class Driver(I2CDriver):
@@ -71,6 +72,8 @@ class Driver(I2CDriver):
                     break
         else:
             time.sleep(self._interval)
+            if cmdid == self._CMD_ZZZ:
+                time.sleep(self._interval * 3)
         time.sleep(0.1)
 
 
@@ -85,7 +88,11 @@ class Driver(I2CDriver):
         self._bus.write_i2c_block_data(self._address,
             ord("@"), cmd.encode("ascii"))
         time.sleep(0.1)
-        return int(self._bus.read_byte(self._address))
+        while True:
+            try:
+                return int(self._bus.read_byte(self._address))
+            except OSError:
+                traceback.print_exc()
 
 
 def _get_range(cfg):
