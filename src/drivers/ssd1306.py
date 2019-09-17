@@ -59,4 +59,4 @@ class Driver(DriverBase):
         self._disp.image(image)
         self._disp.display()
 
-        return (self.sid(), int(time.time() * 1e9), None)
+        return [(self.sid(), int(time.time() * 1e9), None)]
