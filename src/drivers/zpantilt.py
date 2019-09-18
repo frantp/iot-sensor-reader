@@ -57,11 +57,17 @@ class Driver(SMBusDriver):
                         self._bus = SMBus(1)
 
 
-    def _move(self, cmdid, value):
+    def _reset(self):
+        self._move(self._CMD_TLT, 0)
+        self._move(self._CMD_PAN, 0)
+        self._move(self._CMD_ZZZ, 0, True)
+
+
+    def _move(self, cmdid, value, force_check=False):
         cmd = "M{}{:03d}$".format(cmdid, value)
         self._bus.write_i2c_block_data(self._address,
             ord("@"), cmd.encode("ascii"))
-        if self._check_move:
+        if force_check or self._check_move:
             while True:
                 time.sleep(self._interval)
                 res = self._read_state(cmdid)
@@ -74,12 +80,6 @@ class Driver(SMBusDriver):
             if cmdid == self._CMD_ZZZ:
                 time.sleep(self._interval * 3)
         time.sleep(0.1)
-
-
-    def _reset(self):
-        self._move(self._CMD_TLT, 0)
-        self._move(self._CMD_PAN, 0)
-        self._move(self._CMD_ZZZ, 0)
 
 
     def _read_state(self, cmdid):
