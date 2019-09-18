@@ -72,13 +72,13 @@ class ActivationContext:
     def __init__(self, pin=None):
         self._pin = pin
         self._open = False
-        self._lock = get_lock("/run/lock/sreader/gpio.lock")
+        self._lock = None  # get_lock("/run/lock/sreader/gpio.lock")
 
 
     def open(self):
         if not self._pin or self._open:
             return
-        self._lock.acquire()
+        if self._lock: self._lock.acquire()
         GPIO.output(self._pin, GPIO.LOW)
         self._open = True
 
@@ -88,7 +88,7 @@ class ActivationContext:
             return
         self._open = False
         GPIO.output(self._pin, GPIO.HIGH)
-        self._lock.release()
+        if self._lock: self._lock.release()
 
 
     def __enter__(self):
@@ -102,14 +102,12 @@ class ActivationContext:
 
 class DriverBase:
     def __init__(self, lock_file=None):
-        self._lock = get_lock(lock_file) if lock_file else None
-        if self._lock:
-            self._lock.acquire()
+        self._lock = None  # get_lock(lock_file) if lock_file else None
+        if self._lock: self._lock.acquire()
 
 
     def close(self):
-        if self._lock:
-            self._lock.release()
+        if self._lock: self._lock.release()
 
 
     def __enter__(self):

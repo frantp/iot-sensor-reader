@@ -52,9 +52,9 @@ class Driver(I2CDriver):
                     yield self.sid(), int(time.time() * 1e9), state
                     if self._drivers:
                         self._bus.close()
-                        self._lock.release()
+                        if self._lock: self._lock.release()
                         yield from run_drivers(self._drivers)
-                        self._lock.acquire()
+                        if self._lock: self._lock.acquire()
                         self._bus = SMBus(1)
 
 
