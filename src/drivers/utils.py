@@ -3,6 +3,7 @@ import importlib
 import os
 import RPi.GPIO as GPIO
 from serial import Serial
+from smbus2 import SMBus
 import time
 import traceback
 
@@ -29,6 +30,7 @@ def find(obj, key):
 
 
 def run_drivers(cfg):
+    res_all = []
     for driver_id in cfg:
         try:
             for dcfg in cfg[driver_id]:
@@ -42,11 +44,12 @@ def run_drivers(cfg):
                     res = driver.run()
                     if not res:
                         continue
-                    yield from res
+                    res_all.extend(res)
         except KeyboardInterrupt:
             raise
         except:
             traceback.print_exc()
+    return res_all
 
 
 class GPIOContext:
@@ -131,6 +134,26 @@ class I2CDriver(DriverBase):
         super().__init__("/run/lock/sreader/i2c.lock")
 
 
+class SMBusDriver(I2CDriver):
+    def __init__(self):
+        super().__init__()
+        self._bus = SMBus(1)
+
+
+    def close(self):
+        self._bus.close()
+        super().close()
+
+
+    def __enter__(self):
+        super().__enter__()
+        return self
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+
 class SerialDriver(DriverBase):
     def __init__(self, *args, **kwargs):
         super().__init__("/run/lock/sreader/serial.lock")
@@ -146,13 +169,11 @@ class SerialDriver(DriverBase):
 
     def __enter__(self):
         super().__enter__()
-        self._serial.__enter__()
         return self
 
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._serial.__exit__(exc_type, exc_value, traceback)
-        super().__exit__(exc_type, exc_value, traceback)
+        self.close()
 
 
     def _cmd(self, cmd, size=1):

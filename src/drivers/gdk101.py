@@ -1,7 +1,6 @@
-from drivers.utils import I2CDriver
+from drivers.utils import SMBusDriver
 import time
 from collections import OrderedDict
-from smbus2 import SMBus
 
 
 _CMD_RESET                    = 0xA0
@@ -12,11 +11,10 @@ _CMD_READ_MEASURING_VALUE_1M  = 0xB3
 _CMD_READ_FIRMWARE_VERSION    = 0xB4
 
 
-class Driver(I2CDriver):
+class Driver(SMBusDriver):
     def __init__(self, address=0x18):
         super().__init__()
         self._address = address
-        self._bus = SMBus(1)
 
 
     def run(self):

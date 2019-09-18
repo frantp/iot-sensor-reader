@@ -1,11 +1,11 @@
-from drivers.utils import I2CDriver, run_drivers
+from drivers.utils import SMBusDriver, run_drivers
 import time
 from collections import OrderedDict
 from smbus2 import SMBus
 import traceback
 
 
-class Driver(I2CDriver):
+class Driver(SMBusDriver):
     _CMD_ZZZ = "V"
     _CMD_PAN = "P"
     _CMD_TLT = "T"
@@ -22,7 +22,6 @@ class Driver(I2CDriver):
         self._drivers = drivers
         self._interval = interval
         self._check_move = check_move
-        self._bus = SMBus(1)
 
 
     def run(self):
