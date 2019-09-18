@@ -46,7 +46,6 @@ if __name__ == "__main__":
     # Read configuration
     cfg = toml.load(cfg_file)
     interval = int(cfg.get("interval", "0"))
-    device = cfg.get("device") or socket.gethostname()
     measurement = cfg.get("measurement", "data")
     host = cfg.get("host") or socket.gethostname()
     drivers_cfg = cfg.get("drivers", {})
@@ -59,7 +58,7 @@ if __name__ == "__main__":
         mqtt_port = int(mqtt_cfg.get("port", "1883"))
         mqtt_qos = mqtt_cfg.get("qos", 2)
         print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
-        mqtt_client = mqtt.Client(device, clean_session=False)
+        mqtt_client = mqtt.Client(host, clean_session=False)
         mqtt_client.connect(mqtt_host, mqtt_port)
         mqtt_client.loop_start()
 
