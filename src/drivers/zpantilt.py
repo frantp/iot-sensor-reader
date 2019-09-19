@@ -60,7 +60,7 @@ class Driver(SMBusDriver):
     def _reset(self):
         self._move(self._CMD_TLT, 0)
         self._move(self._CMD_PAN, 0)
-        self._move(self._CMD_ZZZ, 0, True)
+        self._move(self._CMD_ZZZ, 0)
 
 
     def _move(self, cmdid, value, force_check=False):
