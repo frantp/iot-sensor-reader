@@ -30,7 +30,6 @@ def find(obj, key):
 
 
 def run_drivers(cfg):
-    res_all = []
     for driver_id in cfg:
         try:
             for dcfg in cfg[driver_id]:
@@ -44,12 +43,11 @@ def run_drivers(cfg):
                     res = driver.run()
                     if not res:
                         continue
-                    res_all.extend(res)
+                    yield from res
         except KeyboardInterrupt:
             raise
         except:
             traceback.print_exc()
-    return res_all
 
 
 class GPIOContext:
