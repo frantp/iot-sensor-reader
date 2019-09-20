@@ -71,25 +71,27 @@ class GPIOContext:
 
 class ActivationContext:
     def __init__(self, pin=None):
-        self._pin = pin
         self._open = False
-        self._lock = None  # get_lock("/run/lock/sreader/gpio.lock")
+        self._pin = pin
+        if self._pin:
+            self._lock = get_lock(
+                "/run/lock/sreader/gpio{}.lock".format(self._pin))
 
 
     def open(self):
         if not self._pin or self._open:
             return
+        self._open = True
         if self._lock: self._lock.acquire()
         GPIO.output(self._pin, GPIO.LOW)
-        self._open = True
 
 
     def close(self):
         if not self._pin or not self._open:
             return
-        self._open = False
         GPIO.output(self._pin, GPIO.HIGH)
         if self._lock: self._lock.release()
+        self._open = False
 
 
     def __enter__(self):
@@ -101,14 +103,30 @@ class ActivationContext:
         self.close()
 
 
+    def __del__(self):
+        self.close()
+
+
 class DriverBase:
     def __init__(self, lock_file=None):
-        self._lock = None  # get_lock(lock_file) if lock_file else None
+        self._open = True
+        self._lock = get_lock(lock_file) if lock_file else None
         if self._lock: self._lock.acquire()
 
 
     def close(self):
+        if not self._open:
+            return
         if self._lock: self._lock.release()
+        self._open = False
+
+
+    def sid(self):
+        return self.__class__.__module__.split(".")[-1]
+
+
+    def run(self):
+        raise NotImplementedError()
 
 
     def __enter__(self):
@@ -119,12 +137,8 @@ class DriverBase:
         self.close()
 
 
-    def sid(self):
-        return self.__class__.__module__.split(".")[-1]
-
-
-    def run(self):
-        raise NotImplementedError()
+    def __del__(self):
+        self.close()
 
 
 class I2CDriver(DriverBase):
@@ -139,17 +153,10 @@ class SMBusDriver(I2CDriver):
 
 
     def close(self):
+        if not self._open:
+            return
         self._bus.close()
         super().close()
-
-
-    def __enter__(self):
-        super().__enter__()
-        return self
-
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
 
 
 class SerialDriver(DriverBase):
@@ -161,17 +168,10 @@ class SerialDriver(DriverBase):
 
 
     def close(self):
+        if not self._open:
+            return
         self._serial.close()
         super().close()
-
-
-    def __enter__(self):
-        super().__enter__()
-        return self
-
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
 
 
     def _cmd(self, cmd, size=1):
