@@ -44,7 +44,7 @@ def run_drivers(cfg):
                     if not res:
                         continue
                     yield from res
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
             raise
         except:
             traceback.print_exc()
