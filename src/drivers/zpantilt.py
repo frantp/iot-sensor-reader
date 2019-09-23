@@ -65,14 +65,8 @@ class Driver(SMBusDriver):
 
     def _move(self, cmdid, value, force_check=False):
         cmd = "M{}{:03d}$".format(cmdid, value)
-        while True:
-            try:
-                self._bus.write_i2c_block_data(self._address,
-                    ord("@"), cmd.encode("ascii"))
-                break
-            except OSError:
-                traceback.print_exc()
-                time.sleep(0.5)
+        _retry(lambda: self._bus.write_i2c_block_data(self._address,
+            ord("@"), cmd.encode("ascii")), 0.5)
         if force_check or self._check_move:
             while True:
                 time.sleep(self._interval)
@@ -90,21 +84,21 @@ class Driver(SMBusDriver):
 
     def _read_state(self, cmdid):
         cmd = "S{:<02}$".format(cmdid)
-        while True:
-            try:
-                self._bus.write_i2c_block_data(self._address,
-                    ord("@"), cmd.encode("ascii"))
-                break
-            except OSError:
-                traceback.print_exc()
-                time.sleep(0.5)
+        _retry(lambda: self._bus.write_i2c_block_data(self._address,
+            ord("@"), cmd.encode("ascii")), 0.5)
         time.sleep(0.1)
-        while True:
-            try:
-                return int(self._bus.read_byte(self._address))
-            except OSError:
-                traceback.print_exc()
-                time.sleep(0.5)
+        _retry(lambda: self._bus.write_i2c_block_data(self._address,
+            ord("@"), cmd.encode("ascii")), 0.5)
+        return _retry(lambda: int(self._bus.read_byte(self._address)), 0.5)
+
+
+def _retry(func, interval):
+    while True:
+        try:
+            return func()
+        except OSError:
+            traceback.print_exc()
+            time.sleep(interval)
 
 
 def _get_range(cfg):
