@@ -29,7 +29,9 @@ def find(obj, key):
             yield from find(v, key)
 
 
-def run_drivers(cfg):
+def run_drivers(cfg, common_timestamp=False):
+    if common_timestamp:
+        ctm = int(time.time() * 1e9)
     for driver_id in cfg:
         try:
             for dcfg in cfg[driver_id]:
@@ -43,7 +45,8 @@ def run_drivers(cfg):
                     res = driver.run()
                     if not res:
                         continue
-                    yield from res
+                    for did, tm, fields in res:
+                        yield did, ctm if common_timestamp else tm, fields
         except (KeyboardInterrupt, SystemExit):
             raise
         except:

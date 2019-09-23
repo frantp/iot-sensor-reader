@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import drivers.utils
+from drivers.utils import GPIOContext, run_drivers
 from collections import OrderedDict
 import paho.mqtt.client as mqtt
 import socket
@@ -19,8 +19,8 @@ def format_msg(timestamp, measurement, tags, fields):
     return "{},{} {} {}".format(measurement, tstr, fstr, timestamp)
 
 
-def run(cfg, measurement, host, client=None, qos=0):
-    for driver_id, tm, fields in drivers.utils.run_drivers(cfg):
+def run(cfg, measurement, host, client=None, qos=0, common_timestamp=False):
+    for driver_id, tm, fields in run_drivers(cfg, common_timestamp):
         if fields:
             fields = OrderedDict([(k, v) \
                 for k, v in fields.items() if v is not None])
@@ -45,9 +45,10 @@ if __name__ == "__main__":
 
     # Read configuration
     cfg = toml.load(cfg_file)
-    interval = int(cfg.get("interval", "0"))
+    interval = cfg.get("interval", 0)
     measurement = cfg.get("measurement", "data")
-    host = cfg.get("host") or socket.gethostname()
+    host = cfg.get("host", socket.gethostname())
+    common_timestamp = cfg.get("common_timestamp", False)
     drivers_cfg = cfg.get("drivers", {})
 
     # Connect to MQTT broker, if necessary
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     mqtt_cfg = cfg.get("mqtt", None)
     if mqtt_cfg is not None:
         mqtt_host = mqtt_cfg.get("host", "localhost")
-        mqtt_port = int(mqtt_cfg.get("port", "1883"))
+        mqtt_port = mqtt_cfg.get("port", 1883)
         mqtt_qos = mqtt_cfg.get("qos", 2)
         print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
         mqtt_client = mqtt.Client(host, clean_session=False)
@@ -64,10 +65,11 @@ if __name__ == "__main__":
 
     # Run drivers
     try:
-        with drivers.utils.GPIOContext(drivers_cfg):
+        with GPIOContext(drivers_cfg):
             while True:
                 time.sleep(sync_time(interval))
-                run(drivers_cfg, measurement, host, mqtt_client, mqtt_qos)
+                run(drivers_cfg, measurement, host, mqtt_client, mqtt_qos,
+                    common_timestamp)
     finally:
         if mqtt_client:
             mqtt_client.disconnect()
