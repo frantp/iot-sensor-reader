@@ -2,6 +2,7 @@ from drivers.utils import SerialDriver
 import time
 from collections import OrderedDict
 from serial import SerialException
+import struct
 
 
 _REQUEST_SEQ = b"\xFF\x01\x86\x00\x00\x00\x00\x00\x79"
@@ -27,6 +28,7 @@ class Driver(SerialDriver):
         res = self._cmd(_REQUEST_SEQ, 9)
         if res[0:2] != b"\xFF\x86" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
+        co2 = struct.unpack("<H", res[2:4])
         return [(self.sid(), tm, OrderedDict([
-            ("co2", (res[2] << 8) + res[3]),
+            ("co2", co2),
         ]))]
