@@ -17,7 +17,7 @@ class Driver(DriverBase):
 
 
     def close(self):
-        self._sensor.deinit()
+        if self._sensor: self._sensor.deinit()
         super().close()
 
 

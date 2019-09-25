@@ -158,7 +158,7 @@ class SMBusDriver(I2CDriver):
     def close(self):
         if not self._open:
             return
-        self._bus.close()
+        if self._bus: self._bus.close()
         super().close()
 
 
@@ -173,7 +173,7 @@ class SerialDriver(DriverBase):
     def close(self):
         if not self._open:
             return
-        self._serial.close()
+        if self._serial: self._serial.close()
         super().close()
 
 
