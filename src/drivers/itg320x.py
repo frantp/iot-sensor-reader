@@ -22,7 +22,7 @@ class Driver(SMBusDriver):
     def run(self):
         ts = int(time.time() * 1e9)
         res = self._bus.read_i2c_block_data(self._address, _REG_DATA, 8)
-        temperature, x, y, z = struct.unpack(">hhhh", res)
+        temperature, x, y, z = struct.unpack(">hhhh", bytearray(res))
         return [(self.sid(), ts, OrderedDict([
             ("temperature", temperature),
             ("gyro_x", x),
