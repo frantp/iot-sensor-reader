@@ -14,10 +14,11 @@ class Driver(SMBusDriver):
     _CMD_ZST = "VE"
 
 
-    def __init__(self, address, movement=None, drivers=None,
+    def __init__(self, address, port=1, movement=None, drivers=None,
         interval=0, polling_interval=0.1, check_move=True):
-        super().__init__()
+        super().__init__(port)
         self._address = address
+        self._port = port
         self._movement = movement
         self._drivers = drivers
         self._interval = interval
@@ -55,7 +56,7 @@ class Driver(SMBusDriver):
                         if self._lock: self._lock.release()
                         yield from run_drivers(self._drivers, self._interval)
                         if self._lock: self._lock.acquire()
-                        self._bus = SMBus(1)
+                        self._bus = SMBus(self._port)
 
 
     def _reset(self):

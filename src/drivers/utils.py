@@ -157,9 +157,9 @@ class I2CDriver(DriverBase):
 
 
 class SMBusDriver(I2CDriver):
-    def __init__(self):
+    def __init__(self, port=1):
         super().__init__()
-        self._bus = SMBus(1)
+        self._bus = SMBus(port)
 
 
     def close(self):

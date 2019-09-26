@@ -12,8 +12,8 @@ _CMD_READ_FIRMWARE_VERSION    = 0xB4
 
 
 class Driver(SMBusDriver):
-    def __init__(self, address=0x18):
-        super().__init__()
+    def __init__(self, address=0x18, port=1):
+        super().__init__(port)
         self._address = address
 
 
