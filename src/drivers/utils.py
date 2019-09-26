@@ -50,10 +50,10 @@ def run_drivers(cfg, sync=0):
                 with ActivationContext(activation_pin), \
                      getattr(driver_module, "Driver")(**dcfg) as driver:
                     res = driver.run()
-                if not res:
-                    continue
-                for did, ts, fields in res:
-                    yield did, round_step(ts, sync), fields
+                    if not res:
+                        continue
+                    for did, ts, fields in res:
+                        yield did, round_step(ts, sync), fields
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
