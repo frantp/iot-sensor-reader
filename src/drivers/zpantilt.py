@@ -2,7 +2,7 @@ from drivers.utils import SMBusDriver, run_drivers
 import time
 from collections import OrderedDict
 from smbus2 import SMBus
-import traceback
+import sys
 
 
 class Driver(SMBusDriver):
@@ -99,7 +99,7 @@ def _retry(func, interval):
         try:
             return func()
         except OSError:
-            traceback.print_exc()
+            print("[zpantilt] OSError", file=sys.stderr)
             time.sleep(interval)
 
 
