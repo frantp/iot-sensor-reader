@@ -29,11 +29,16 @@ def find(obj, key):
             yield from find(v, key)
 
 
+def sync_wait(sync):
+    return sync - time.time() % sync if sync > 0 else 0
+
+
 def round_step(x, step):
     return x // step * step if step else x
 
 
-def run_drivers(cfg, timestamp_sync=0):
+def run_drivers(cfg, sync=0):
+    time.sleep(sync_wait(sync))
     for driver_id in cfg:
         try:
             for dcfg in cfg[driver_id]:
@@ -48,7 +53,7 @@ def run_drivers(cfg, timestamp_sync=0):
                 if not res:
                     continue
                 for did, ts, fields in res:
-                    yield did, round_step(ts, timestamp_sync), fields
+                    yield did, round_step(ts, sync), fields
         except (KeyboardInterrupt, SystemExit):
             raise
         except:

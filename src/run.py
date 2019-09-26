@@ -5,12 +5,7 @@ from collections import OrderedDict
 import paho.mqtt.client as mqtt
 import socket
 import sys
-import time
 import toml
-
-
-def sync_time(interval):
-    return interval - time.time() % interval if interval > 0 else 0
 
 
 def format_msg(timestamp, measurement, tags, fields):
@@ -19,8 +14,8 @@ def format_msg(timestamp, measurement, tags, fields):
     return "{},{} {} {}".format(measurement, tstr, fstr, timestamp)
 
 
-def run(cfg, measurement, host, client=None, qos=0, timestamp_sync=0):
-    for driver_id, ts, fields in run_drivers(cfg, timestamp_sync):
+def run(cfg, measurement, host, client=None, qos=0, sync=0):
+    for driver_id, ts, fields in run_drivers(cfg, sync):
         if fields:
             fields = OrderedDict([(k, v) \
                 for k, v in fields.items() if v is not None])
@@ -67,7 +62,6 @@ if __name__ == "__main__":
     try:
         with GPIOContext(drivers_cfg):
             while True:
-                time.sleep(sync_time(interval))
                 run(drivers_cfg, measurement, host,
                     mqtt_client, mqtt_qos, interval)
     finally:
