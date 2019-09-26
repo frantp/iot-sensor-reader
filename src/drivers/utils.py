@@ -43,10 +43,10 @@ def run_drivers(cfg, common_timestamp=False):
                 with ActivationContext(activation_pin), \
                      getattr(driver_module, "Driver")(**dcfg) as driver:
                     res = driver.run()
-                    if not res:
-                        continue
-                    for did, tm, fields in res:
-                        yield did, ctm if common_timestamp else tm, fields
+                if not res:
+                    continue
+                for did, tm, fields in res:
+                    yield did, ctm if common_timestamp else tm, fields
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
