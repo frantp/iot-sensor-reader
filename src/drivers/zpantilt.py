@@ -14,7 +14,7 @@ class Driver(SMBusDriver):
     _CMD_ZST = "VE"
 
 
-    def __init__(self, address=0x16, movement=None, drivers=None,
+    def __init__(self, address, movement=None, drivers=None,
         interval=0, polling_interval=0.1, check_move=True):
         super().__init__()
         self._address = address
