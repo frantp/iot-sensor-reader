@@ -14,11 +14,11 @@ class Driver(I2CDriver):
 
 
     def run(self):
-        tm, temp, px = int(time.time() * 1e9), \
+        ts, temp, px = int(time.time() * 1e9), \
             self._sensor.temperature, self._sensor.pixels
         data = OrderedDict()
         data["temperature"] = temp
         for j, row in enumerate(px):
             for i, val in enumerate(row):
                 data["px{}{}".format(i, j)] = val
-        return [(self.sid(), tm, data)]
+        return [(self.sid(), ts, data)]

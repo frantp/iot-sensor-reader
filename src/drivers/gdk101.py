@@ -18,7 +18,7 @@ class Driver(SMBusDriver):
 
 
     def run(self):
-        tm = int(time.time() * 1e9)
+        ts = int(time.time() * 1e9)
         status, vibration = self._bus.read_i2c_block_data(
             self._address, _CMD_READ_STATUS, 2)
         minutes, seconds = self._bus.read_i2c_block_data(
@@ -29,7 +29,7 @@ class Driver(SMBusDriver):
             self._address, _CMD_READ_MEASURING_VALUE_1M, 2)
         firmm, firms = self._bus.read_i2c_block_data(
             self._address, _CMD_READ_FIRMWARE_VERSION, 2)
-        return [(self.sid(), tm, OrderedDict([
+        return [(self.sid(), ts, OrderedDict([
             ("status", status),
             ("vibration", vibration),
             ("meastime", 60 * minutes + seconds),

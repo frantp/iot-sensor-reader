@@ -21,12 +21,12 @@ class Driver(SerialDriver):
 
 
     def run(self):
-        tm = int(time.time() * 1e9)
+        ts = int(time.time() * 1e9)
         res = self._cmd(_REQUEST_SEQ, 8)
         if res[0:3] != b"\x02\x10\x04" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         status, minutes, rint, rdec = res[3:7]
-        return [(self.sid(), tm, OrderedDict([
+        return [(self.sid(), ts, OrderedDict([
             ("status", status),
             ("meastime", 60 * minutes),
             ("radon", (rint + rdec / 100) * 37),  # pCi/L -> Bq/m^3

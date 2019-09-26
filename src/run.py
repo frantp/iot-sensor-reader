@@ -19,8 +19,8 @@ def format_msg(timestamp, measurement, tags, fields):
     return "{},{} {} {}".format(measurement, tstr, fstr, timestamp)
 
 
-def run(cfg, measurement, host, client=None, qos=0, common_timestamp=False):
-    for driver_id, tm, fields in run_drivers(cfg, common_timestamp):
+def run(cfg, measurement, host, client=None, qos=0, timestamp_sync=0):
+    for driver_id, ts, fields in run_drivers(cfg, timestamp_sync):
         if fields:
             fields = OrderedDict([(k, v) \
                 for k, v in fields.items() if v is not None])
@@ -30,7 +30,7 @@ def run(cfg, measurement, host, client=None, qos=0, common_timestamp=False):
             ("host", host),
             ("sid", driver_id),
         ])
-        payload = format_msg(tm, measurement, tags, fields)
+        payload = format_msg(ts, measurement, tags, fields)
         if client:
             topic = "{}/{}/{}".format(measurement, host, driver_id)
             client.publish(topic, payload, qos, True)
@@ -68,8 +68,8 @@ if __name__ == "__main__":
         with GPIOContext(drivers_cfg):
             while True:
                 time.sleep(sync_time(interval))
-                run(drivers_cfg, measurement, host, mqtt_client, mqtt_qos,
-                    common_timestamp)
+                run(drivers_cfg, measurement, host,
+                    mqtt_client, mqtt_qos, interval)
     finally:
         if mqtt_client:
             mqtt_client.disconnect()

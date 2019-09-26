@@ -19,13 +19,13 @@ class Driver(SerialDriver):
 
 
     def run(self):
-        tm = int(time.time() * 1e9)
+        ts = int(time.time() * 1e9)
         self._serial.read_until(b"\x59\x59")
         res = b"\x59\x59" + self._serial.read(7)
         if _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         distance, strength = struct.unpack("<HH", res[2:6])
-        return [(self.sid(), tm, OrderedDict([
+        return [(self.sid(), ts, OrderedDict([
             ("distance", distance),
             ("strength", strength),
         ]))]

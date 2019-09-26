@@ -39,12 +39,12 @@ class Driver(SerialDriver):
         
 
     def run(self):
-        tm = int(time.time() * 1e9)
+        ts = int(time.time() * 1e9)
         res = self._cmd(_seq(_REQUEST_CODES), 10)
         if res[0:2] != b"\xAA\xC0" or _check(res):
-            return tm, None
+            return ts, None
         pm25, pm10 = [x / 10 for x in struct.unpack("<HH", res[2:6])]
-        return [(self.sid(), tm, OrderedDict([
+        return [(self.sid(), ts, OrderedDict([
             ("pm25", pm25),
             ("pm10", pm10),
         ]))]

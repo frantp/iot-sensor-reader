@@ -24,11 +24,11 @@ class Driver(SerialDriver):
 
 
     def run(self):
-        tm = int(time.time() * 1e9)
+        ts = int(time.time() * 1e9)
         res = self._cmd(_REQUEST_SEQ, 9)
         if res[0:2] != b"\xFF\x86" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         co2 = struct.unpack("<H", res[2:4])
-        return [(self.sid(), tm, OrderedDict([
+        return [(self.sid(), ts, OrderedDict([
             ("co2", co2),
         ]))]

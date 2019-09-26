@@ -29,9 +29,11 @@ def find(obj, key):
             yield from find(v, key)
 
 
-def run_drivers(cfg, common_timestamp=False):
-    if common_timestamp:
-        ctm = int(time.time() * 1e9)
+def round_step(x, step):
+    return x // step * step if step else x
+
+
+def run_drivers(cfg, timestamp_sync=0):
     for driver_id in cfg:
         try:
             for dcfg in cfg[driver_id]:
@@ -45,8 +47,8 @@ def run_drivers(cfg, common_timestamp=False):
                     res = driver.run()
                 if not res:
                     continue
-                for did, tm, fields in res:
-                    yield did, ctm if common_timestamp else tm, fields
+                for did, ts, fields in res:
+                    yield did, round_step(ts, timestamp_sync), fields
         except (KeyboardInterrupt, SystemExit):
             raise
         except:

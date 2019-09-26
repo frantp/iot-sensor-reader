@@ -15,14 +15,14 @@ class Driver(SMBusDriver):
 
 
     def __init__(self, address=0x16, movement=None, drivers=None,
-        interval=0.1, check_move=True, common_timestamp=False):
+        interval=0, polling_interval=0.1, check_move=True):
         super().__init__()
         self._address = address
         self._movement = movement
         self._drivers = drivers
         self._interval = interval
+        self._polling_interval = polling_interval
         self._check_move = check_move
-        self._common_timestamp = common_timestamp
 
 
     def run(self):
@@ -53,8 +53,7 @@ class Driver(SMBusDriver):
                     if self._drivers:
                         self._bus.close()
                         if self._lock: self._lock.release()
-                        yield from run_drivers(
-                            self._drivers, self._common_timestamp)
+                        yield from run_drivers(self._drivers, self._interval)
                         if self._lock: self._lock.acquire()
                         self._bus = SMBus(1)
 
@@ -71,16 +70,16 @@ class Driver(SMBusDriver):
             ord("@"), cmd.encode("ascii")), 0.5)
         if force_check or self._check_move:
             while True:
-                time.sleep(self._interval)
+                time.sleep(self._polling_interval)
                 res = self._read_state(cmdid)
                 if (cmdid == self._CMD_ZZZ and _close(res, value, 1)) or \
                    (cmdid == self._CMD_PAN and _close(res, value, 1)) or \
                    (cmdid == self._CMD_TLT and _close(res, value, 1)):
                     break
         else:
-            time.sleep(self._interval)
+            time.sleep(self._polling_interval)
             if cmdid == self._CMD_ZZZ:
-                time.sleep(self._interval * 3)
+                time.sleep(self._polling_interval * 3)
         time.sleep(0.1)
 
 
