@@ -1,8 +1,6 @@
 from drivers.utils import DriverBase
 import datetime
 from collections import OrderedDict
-import board
-import busio
 from Adafruit_SSD1306 import SSD1306_128_32, SSD1306_128_64
 from PIL import Image, ImageDraw, ImageFont
 import subprocess
