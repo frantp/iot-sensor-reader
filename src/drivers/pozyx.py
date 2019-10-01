@@ -12,7 +12,8 @@ class Driver(DriverBase):
 
     def run(self):
         position = pypozyx.Coordinates()
-        self._sensor.doPositioning(position)
+        while position.x == position.y == position.z == 0:
+            self._sensor.doPositioning(position)
         return [(self.sid(), int(time.time() * 1e9), OrderedDict([
             ("pos_x", position.x),
             ("pos_y", position.y),
