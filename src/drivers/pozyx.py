@@ -5,10 +5,11 @@ import pypozyx
 
 
 class Driver(DriverBase):
-    def __init__(self, i2c=False, port=None):
+    def __init__(self, i2c=False, bus=1, port=None):
         super().__init__()
-        self._sensor = pypozyx.PozyxI2C() if i2c else pypozyx.PozyxSerial(
-            port or pypozyx.get_first_pozyx_serial_port())
+        self._sensor = pypozyx.PozyxI2C(bus) if i2c else \
+            pypozyx.PozyxSerial(port or pypozyx.get_first_pozyx_serial_port())
+
 
     def run(self):
         position = pypozyx.Coordinates()

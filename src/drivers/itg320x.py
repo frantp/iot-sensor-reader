@@ -14,8 +14,8 @@ _REG_PWR_MGM    = 0x3E
 
 
 class Driver(SMBusDriver):
-    def __init__(self, address=0x68, port=1):
-        super().__init__(port)
+    def __init__(self, address=0x68, bus=1):
+        super().__init__(bus)
         self._address = address
 
 

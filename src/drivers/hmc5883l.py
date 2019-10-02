@@ -11,8 +11,8 @@ _REG_DATA = 0x03
 
 
 class Driver(SMBusDriver):
-    def __init__(self, address=0x1E, port=1):
-        super().__init__(port)
+    def __init__(self, address=0x1E, bus=1):
+        super().__init__(bus)
         self._address = address
         self._bus.write_byte_data(self._address, _REG_MODE, 0x00)
 
