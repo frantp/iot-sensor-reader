@@ -11,6 +11,12 @@ class Driver(DriverBase):
             pypozyx.PozyxSerial(port or pypozyx.get_first_pozyx_serial_port())
 
 
+    def close(self):
+        if isinstance(self._sensor, pypozyx.PozyxI2C):
+            self._sensor.bus.close()
+        super().close()
+
+
     def run(self):
         position = pypozyx.Coordinates()
         while position.x == position.y == position.z == 0:
