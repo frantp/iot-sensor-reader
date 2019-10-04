@@ -9,6 +9,7 @@ import traceback
 
 
 ACT_PIN_ID = "ACTIVATION_PIN"
+LOCK_PREFIX = "/run/lock/piot"
 
 
 def get_lock(lock_file):
@@ -85,7 +86,7 @@ class ActivationContext:
         self._pin = pin
         if self._pin:
             self._lock = get_lock(
-                "/run/lock/sreader/gpio{}.lock".format(self._pin))
+                "{}/gpio{}.lock".format(LOCK_PREFIX, self._pin))
 
 
     def open(self):
@@ -153,7 +154,7 @@ class DriverBase:
 
 class I2CDriver(DriverBase):
     def __init__(self):
-        super().__init__("/run/lock/sreader/i2c.lock")
+        super().__init__("{}/i2c.lock".format(LOCK_PREFIX))
 
 
 class SMBusDriver(I2CDriver):
@@ -171,7 +172,7 @@ class SMBusDriver(I2CDriver):
 
 class SerialDriver(DriverBase):
     def __init__(self, *args, **kwargs):
-        super().__init__("/run/lock/sreader/serial.lock")
+        super().__init__("{}/serial.lock".format(LOCK_PREFIX))
         self._serial = Serial(timeout=1, *args, **kwargs)
         self._serial.reset_input_buffer()
         self._serial.reset_output_buffer()
