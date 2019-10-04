@@ -6,12 +6,12 @@ import sys
 
 
 class Driver(SMBusDriver):
-    _CMD_ZZZ = "V"
+    _CMD_VRT = "V"
     _CMD_PAN = "P"
     _CMD_TLT = "T"
     _CMD_BT1 = "B1"
     _CMD_BT2 = "B2"
-    _CMD_ZST = "VE"
+    _CMD_VST = "VE"
 
 
     def __init__(self, address, bus=1, movement=None, drivers=None,
@@ -28,27 +28,27 @@ class Driver(SMBusDriver):
 
     def run(self):
         self._reset()
-        for z in _get_range(self._movement["z"]):
-            self._move(self._CMD_ZZZ, z)
+        for vert in _get_range(self._movement["vert"]):
+            self._move(self._CMD_VRT, vert)
             for pan in _get_range(self._movement["pan"]):
                 self._move(self._CMD_PAN, pan)
                 for tilt in _get_range(self._movement["tilt"]):
                     self._move(self._CMD_TLT, tilt)
-                    res_zzz = self._read_state(self._CMD_ZZZ)
+                    res_vrt = self._read_state(self._CMD_VRT)
                     res_pan = self._read_state(self._CMD_PAN)
                     res_tlt = self._read_state(self._CMD_TLT)
+                    res_vst = self._read_state(self._CMD_VST)
                     res_bt1 = self._read_state(self._CMD_BT1)
                     res_bt2 = self._read_state(self._CMD_BT2)
-                    res_zst = self._read_state(self._CMD_ZST)
                     state = OrderedDict([
-                        ("z"             , res_zzz),
-                        ("pan"           , res_pan),
-                        ("tilt"          , res_tlt),
-                        ("battery1"      , res_bt1 & 0x3F),
-                        ("battery2"      , res_bt2 & 0x3F),
-                        ("battery1_state", (res_bt1 & 0xC0) >> 6),
-                        ("battery2_state", (res_bt2 & 0xC0) >> 6),
-                        ("z_state"       , res_zst),
+                        ("vert"         , res_vrt),
+                        ("pan"          , res_pan),
+                        ("tilt"         , res_tlt),
+                        ("bat1_voltage" , res_bt1 & 0x3F),
+                        ("bat2_voltage" , res_bt2 & 0x3F),
+                        ("bat1_state"   , (res_bt1 & 0xC0) >> 6),
+                        ("bat2_state"   , (res_bt2 & 0xC0) >> 6),
+                        ("vert_state"   , res_vst),
                     ])
                     yield self.sid(), int(time.time() * 1e9), state
                     if self._drivers:
@@ -62,7 +62,7 @@ class Driver(SMBusDriver):
     def _reset(self):
         self._move(self._CMD_TLT, 0)
         self._move(self._CMD_PAN, 0)
-        self._move(self._CMD_ZZZ, 0)
+        self._move(self._CMD_VRT, 0)
 
 
     def _move(self, cmdid, value, force_check=False):
@@ -73,13 +73,13 @@ class Driver(SMBusDriver):
             while True:
                 time.sleep(self._polling_interval)
                 res = self._read_state(cmdid)
-                if (cmdid == self._CMD_ZZZ and _close(res, value, 1)) or \
+                if (cmdid == self._CMD_VRT and _close(res, value, 1)) or \
                    (cmdid == self._CMD_PAN and _close(res, value, 1)) or \
                    (cmdid == self._CMD_TLT and _close(res, value, 1)):
                     break
         else:
             time.sleep(self._polling_interval)
-            if cmdid == self._CMD_ZZZ:
+            if cmdid == self._CMD_VRT:
                 time.sleep(self._polling_interval * 3)
         time.sleep(0.1)
 
@@ -99,7 +99,7 @@ def _retry(func, interval):
         try:
             return func()
         except OSError:
-            print("[zpantilt] OSError", file=sys.stderr)
+            print("[vertpantilt] OSError", file=sys.stderr)
             time.sleep(interval)
 
 
