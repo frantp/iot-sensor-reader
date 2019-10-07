@@ -1,8 +1,9 @@
-from drivers.utils import SerialDriver
-import time
 from collections import OrderedDict
-from serial import SerialException
 import struct
+import time
+
+from ..core import SerialDriver
+from serial import SerialException
 
 
 def _checksum(res):

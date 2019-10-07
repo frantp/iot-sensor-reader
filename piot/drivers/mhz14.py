@@ -1,8 +1,9 @@
-from drivers.utils import SerialDriver
-import time
 from collections import OrderedDict
-from serial import SerialException
 import struct
+import time
+
+from ..core import SerialDriver
+from serial import SerialException
 
 
 _REQUEST_SEQ = b"\xFF\x01\x86\x00\x00\x00\x00\x00\x79"

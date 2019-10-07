@@ -1,6 +1,7 @@
-from drivers.utils import DriverBase
-import time
 from collections import OrderedDict
+import time
+
+from ..core import DriverBase
 from adafruit_dht import DHT11, DHT22
 
 

@@ -1,6 +1,7 @@
-from drivers.utils import SerialDriver
-import time
 from collections import OrderedDict
+import time
+
+from ..core import SerialDriver
 from serial import SerialException
 
 

@@ -1,8 +1,9 @@
-from drivers.utils import SMBusDriver, run_drivers
-import time
 from collections import OrderedDict
-from smbus2 import SMBus
 import sys
+import time
+
+from ..core import SMBusDriver, run_drivers
+from smbus2 import SMBus
 
 
 class Driver(SMBusDriver):

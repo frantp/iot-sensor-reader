@@ -1,8 +1,9 @@
-from drivers.utils import SerialDriver
-import time
 from collections import OrderedDict
-from serial import SerialException
 import struct
+import time
+
+from ..core import SerialDriver
+from serial import SerialException
 
 
 _PASSIVE_CODES = b"\x02\x01\x01"

@@ -1,7 +1,8 @@
-from drivers.utils import SMBusDriver
-import time
 from collections import OrderedDict
 import struct
+import time
+
+from ..core import SMBusDriver
 
 
 _REG_CFGA = 0x00

@@ -1,10 +1,17 @@
+#!/usr/bin/env python3
+
+from collections import OrderedDict
 from filelock import FileLock
 import importlib
 import os
+import paho.mqtt.client as mqtt
 import RPi.GPIO as GPIO
 from serial import Serial
 from smbus2 import SMBus
+import socket
+import sys
 import time
+import toml
 import traceback
 
 
@@ -30,6 +37,12 @@ def find(obj, key):
             yield from find(v, key)
 
 
+def format_msg(timestamp, measurement, tags, fields):
+    tstr = ",".join(["{}={}".format(k, v) for k, v in tags.items()])
+    fstr = ",".join(["{}={}".format(k, v) for k, v in fields.items()])
+    return "{},{} {} {}".format(measurement, tstr, fstr, timestamp)
+
+
 def sync_wait(sync):
     return sync - time.time() % sync if sync > 0 else 0
 
@@ -47,7 +60,8 @@ def run_drivers(cfg, sync=0):
                 if ACT_PIN_ID in dcfg:
                     activation_pin = dcfg[ACT_PIN_ID]
                     dcfg = {k: v for k, v in dcfg.items() if k != ACT_PIN_ID}
-                driver_module = importlib.import_module("drivers." + driver_id)
+                driver_module = importlib.import_module(
+                    "piot.drivers." + driver_id)
                 with ActivationContext(activation_pin), \
                      getattr(driver_module, "Driver")(**dcfg) as driver:
                     res = driver.run()
@@ -59,6 +73,60 @@ def run_drivers(cfg, sync=0):
             raise
         except:
             traceback.print_exc()
+
+
+def run(cfg, measurement, host, client=None, qos=0, sync=0):
+    for driver_id, ts, fields in run_drivers(cfg, sync):
+        if fields:
+            fields = OrderedDict([(k, v) \
+                for k, v in fields.items() if v is not None])
+        if not fields:
+            continue
+        tags = OrderedDict([
+            ("host", host),
+            ("sid", driver_id),
+        ])
+        payload = format_msg(ts, measurement, tags, fields)
+        if client:
+            topic = "{}/{}/{}".format(measurement, host, driver_id)
+            client.publish(topic, payload, qos, True)
+        else:
+            print(payload)
+
+
+def main():
+    if len(sys.argv) <= 1:
+        print("Usage: {} <cfg_file>".format(sys.argv[0]))
+    cfg_file  = sys.argv[1]
+
+    # Read configuration
+    cfg = toml.load(cfg_file)
+    interval = cfg.get("interval", 0)
+    measurement = cfg.get("measurement", "data")
+    host = cfg.get("host", socket.gethostname())
+    drivers_cfg = cfg.get("drivers", {})
+
+    # Connect to MQTT broker, if necessary
+    mqtt_client, mqtt_qos = None, 0
+    mqtt_cfg = cfg.get("mqtt", None)
+    if mqtt_cfg is not None:
+        mqtt_host = mqtt_cfg.get("host", "localhost")
+        mqtt_port = mqtt_cfg.get("port", 1883)
+        mqtt_qos = mqtt_cfg.get("qos", 2)
+        print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
+        mqtt_client = mqtt.Client(host, clean_session=False)
+        mqtt_client.connect(mqtt_host, mqtt_port)
+        mqtt_client.loop_start()
+
+    # Run drivers
+    try:
+        with GPIOContext(drivers_cfg):
+            while True:
+                run(drivers_cfg, measurement, host,
+                    mqtt_client, mqtt_qos, interval)
+    finally:
+        if mqtt_client:
+            mqtt_client.disconnect()
 
 
 class GPIOContext:
@@ -182,3 +250,7 @@ class SerialDriver(DriverBase):
         self._serial.flush()
         time.sleep(0.1)
         return self._serial.read(size)
+
+
+if __name__ == "__main__":
+    main()

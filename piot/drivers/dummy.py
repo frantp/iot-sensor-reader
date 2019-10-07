@@ -1,5 +1,6 @@
-from drivers.utils import DriverBase
 import time
+
+from ..core import DriverBase
 
 
 class Driver(DriverBase):

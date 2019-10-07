@@ -1,6 +1,7 @@
-from drivers.utils import SMBusDriver
-import time
 from collections import OrderedDict
+import time
+
+from ..core import SMBusDriver
 
 
 _CMD_RESET                    = 0xA0

@@ -1,6 +1,7 @@
-from drivers.utils import I2CDriver
-import time
 from collections import OrderedDict
+import time
+
+from ..core import I2CDriver
 import board
 import busio
 from adafruit_tsl2561 import TSL2561
