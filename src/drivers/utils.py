@@ -114,10 +114,6 @@ class ActivationContext:
         self.close()
 
 
-    def __del__(self):
-        self.close()
-
-
 class DriverBase:
     def __init__(self, lock_file=None):
         self._open = True
@@ -145,10 +141,6 @@ class DriverBase:
 
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
-
-
-    def __del__(self):
         self.close()
 
 
