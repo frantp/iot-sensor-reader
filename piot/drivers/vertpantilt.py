@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import struct
 import sys
 import time
 
@@ -7,12 +8,8 @@ from smbus2 import SMBus
 
 
 class Driver(SMBusDriver):
-    _CMD_VRT = "V"
-    _CMD_PAN = "P"
-    _CMD_TLT = "T"
-    _CMD_BT1 = "B1"
-    _CMD_BT2 = "B2"
-    _CMD_VST = "VE"
+    _CMD_MOVE = 0x4D
+    _CMD_READ = 0x52
 
 
     def __init__(self, address, bus=1, movement=None, drivers=None,
@@ -28,28 +25,18 @@ class Driver(SMBusDriver):
 
 
     def run(self):
-        self._reset()
         for vert in _get_range(self._movement["vert"]):
-            self._move(self._CMD_VRT, vert)
             for pan in _get_range(self._movement["pan"]):
-                self._move(self._CMD_PAN, pan)
                 for tilt in _get_range(self._movement["tilt"]):
-                    self._move(self._CMD_TLT, tilt)
-                    res_vrt = self._read_state(self._CMD_VRT)
-                    res_pan = self._read_state(self._CMD_PAN)
-                    res_tlt = self._read_state(self._CMD_TLT)
-                    res_vst = self._read_state(self._CMD_VST)
-                    res_bt1 = self._read_state(self._CMD_BT1)
-                    res_bt2 = self._read_state(self._CMD_BT2)
+                    self._move(vert, pan, tilt)
+                    vert, pan, tilt, flags, bt1, bt2 = self._read_state()
                     state = OrderedDict([
-                        ("vert"         , res_vrt),
-                        ("pan"          , res_pan),
-                        ("tilt"         , res_tlt),
-                        ("bat1_voltage" , res_bt1 & 0x3F),
-                        ("bat2_voltage" , res_bt2 & 0x3F),
-                        ("bat1_state"   , (res_bt1 & 0xC0) >> 6),
-                        ("bat2_state"   , (res_bt2 & 0xC0) >> 6),
-                        ("vert_state"   , res_vst),
+                        ("vert"    , vert),
+                        ("pan"     , pan),
+                        ("tilt"    , tilt),
+                        ("flags"   , flags),
+                        ("battery1", bt1),
+                        ("battery2", bt2),
                     ])
                     yield self.sid(), int(time.time() * 1e9), state
                     if self._drivers:
@@ -60,39 +47,25 @@ class Driver(SMBusDriver):
                         self._bus = SMBus(self._busnum)
 
 
-    def _reset(self):
-        self._move(self._CMD_TLT, 0)
-        self._move(self._CMD_PAN, 0)
-        self._move(self._CMD_VRT, 0)
-
-
-    def _move(self, cmdid, value, force_check=False):
-        cmd = "M{}{:03d}$".format(cmdid, value)
-        _retry(lambda: self._bus.write_i2c_block_data(self._address,
-            ord("@"), cmd.encode("ascii")), 0.5)
-        if force_check or self._check_move:
+    def _move(self, vert, pan, tilt):
+        data = struct.pack(">HBB", vert, pan, tilt)
+        _retry(lambda: self._bus.write_i2c_block_data(
+            self._address, self._CMD_MOVE, data), 0.5)
+        if self._check_move:
             while True:
                 time.sleep(self._polling_interval)
-                res = self._read_state(cmdid)
-                if (cmdid == self._CMD_VRT and _close(res, value, 1)) or \
-                   (cmdid == self._CMD_PAN and _close(res, value, 1)) or \
-                   (cmdid == self._CMD_TLT and _close(res, value, 1)):
+                cvert, cpan, ctilt, _, _, _ = self._read_state()
+                if cvert == vert and cpan == pan and ctilt == tilt:
                     break
         else:
             time.sleep(self._polling_interval)
-            if cmdid == self._CMD_VRT:
-                time.sleep(self._polling_interval * 3)
         time.sleep(0.1)
 
 
-    def _read_state(self, cmdid):
-        cmd = "S{:<02}$".format(cmdid)
-        _retry(lambda: self._bus.write_i2c_block_data(self._address,
-            ord("@"), cmd.encode("ascii")), 0.5)
-        time.sleep(0.1)
-        _retry(lambda: self._bus.write_i2c_block_data(self._address,
-            ord("@"), cmd.encode("ascii")), 0.5)
-        return _retry(lambda: int(self._bus.read_byte(self._address)), 0.5)
+    def _read_state(self):
+        data = bytes(_retry(lambda: self._bus.read_i2c_block_data(
+            self._address, self._CMD_READ, 7), 0.5))
+        return struct.unpack(">HBBBBB", data)
 
 
 def _retry(func, interval):
