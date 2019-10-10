@@ -13,7 +13,7 @@ class Driver(SMBusDriver):
 
 
     def __init__(self, address, bus=1, movement=None, drivers=None,
-        interval=0, polling_interval=0.1, check_move=True):
+        interval=0, polling_interval=0.1, retry_interval=0.5, check_move=True):
         super().__init__(bus)
         self._address = address
         self._busnum = bus
@@ -21,6 +21,7 @@ class Driver(SMBusDriver):
         self._drivers = drivers
         self._interval = interval
         self._polling_interval = polling_interval
+        self._retry_interval = retry_interval
         self._check_move = check_move
 
 
@@ -51,7 +52,7 @@ class Driver(SMBusDriver):
         data = struct.pack(">HBB", vert, pan, tilt)
         _retry(lambda:
             self._bus.write_i2c_block_data(self._address, self._CMD_MOVE, data),
-            0.1)
+            self._retry_interval)
         if self._check_move:
             while True:
                 time.sleep(self._polling_interval)
@@ -65,7 +66,7 @@ class Driver(SMBusDriver):
     def _read(self):
         data = _retry(lambda:
             self._bus.read_i2c_block_data(self._address, self._CMD_READ, 7),
-            0.1)
+            self._retry_interval)
         return struct.unpack(">HBBBBB", bytes(data))
 
 
