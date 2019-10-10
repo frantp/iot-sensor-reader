@@ -29,7 +29,7 @@ class Driver(SMBusDriver):
             for pan in _get_range(self._movement["pan"]):
                 for tilt in _get_range(self._movement["tilt"]):
                     self._move(vert, pan, tilt)
-                    vert, pan, tilt, flags, bt1, bt2 = self._read_state()
+                    vert, pan, tilt, flags, bt1, bt2 = self._read()
                     state = OrderedDict([
                         ("vert"    , vert),
                         ("pan"     , pan),
@@ -49,23 +49,28 @@ class Driver(SMBusDriver):
 
     def _move(self, vert, pan, tilt):
         data = struct.pack(">HBB", vert, pan, tilt)
-        _retry(lambda: self._bus.write_i2c_block_data(
-            self._address, self._CMD_MOVE, data), 0.5)
+        _retry(lambda:
+            self._bus.write_i2c_block_data(self._address, self._CMD_MOVE, data),
+            0.1)
         if self._check_move:
             while True:
                 time.sleep(self._polling_interval)
-                cvert, cpan, ctilt, _, _, _ = self._read_state()
+                cvert, cpan, ctilt, _, _, _ = self._read()
                 if cvert == vert and cpan == pan and ctilt == tilt:
                     break
         else:
             time.sleep(self._polling_interval)
-        time.sleep(0.1)
 
 
-    def _read_state(self):
-        data = bytes(_retry(lambda: self._bus.read_i2c_block_data(
-            self._address, self._CMD_READ, 7), 0.5))
-        return struct.unpack(">HBBBBB", data)
+    def _read(self):
+        data = _retry(lambda:
+            self._bus.read_i2c_block_data(self._address, self._CMD_READ, 7),
+            0.1)
+        return struct.unpack(">HBBBBB", bytes(data))
+
+
+def _get_range(cfg):
+    return range(cfg["start"], cfg["stop"] + 1, cfg["step"])
 
 
 def _retry(func, interval):
@@ -75,11 +80,3 @@ def _retry(func, interval):
         except OSError:
             print("[vertpantilt] OSError", file=sys.stderr)
             time.sleep(interval)
-
-
-def _get_range(cfg):
-    return range(cfg["start"], cfg["stop"] + 1, cfg["step"])
-
-
-def _close(a, b, tolerance):
-    return abs(a - b) <= tolerance
