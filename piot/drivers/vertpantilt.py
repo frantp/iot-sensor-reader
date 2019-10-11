@@ -32,6 +32,7 @@ class Driver(SMBusDriver):
             for pan in _get_range(self._movement["pan"]):
                 for tilt in _get_range(self._movement["tilt"]):
                     self._move(vert, pan, tilt)
+                    time.sleep(0.1)
                     vert, pan, tilt, flags, bt1, bt2 = self._read()
                     state = OrderedDict([
                         ("vert"    , vert),
