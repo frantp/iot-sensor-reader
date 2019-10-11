@@ -12,7 +12,7 @@ _CALSPAN_SEQ = b"\xFF\x01\x88\x07\xD0\x00\x00\x00\xA0"
 
 
 def _checksum(res):
-    return 0xFF - (sum(res[1:]) & 0xFF) + 1
+    return (0xFF - (sum(res[1:]) & 0xFF) + 1) & 0xFF
 
 
 def _check(res):
