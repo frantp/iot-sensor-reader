@@ -52,22 +52,39 @@ class Driver(SMBusDriver):
 
 
     def _move(self, vert, pan, tilt):
-        data = struct.pack(">HBB", vert, pan, tilt)
-        checksum = (0xFF - (sum(data) & 0xFF) + 1) & 0xFF
-        data += bytes([checksum])
-        _retry(lambda: self._bus.write_i2c_block_data(
-            self._address, self._CMD_MOVE, data), self._polling_interval)
         while True:
-            time.sleep(self._polling_interval)
-            cvert, cpan, ctilt, _, _, _ = self._read()
-            if cvert == vert and cpan == pan and ctilt == tilt:
-                break
+            try:
+                self._send_move(vert, pan, tilt)
+                time.sleep(self._polling_interval)
+                cvert, cpan, ctilt, _, _, _ = self._send_read()
+                if cvert == vert and cpan == pan and ctilt == tilt:
+                    return
+                time.sleep(self._polling_interval)
+            except OSError:
+                print("[vertpantilt] Move: OS error", file=sys.stderr)
+                time.sleep(self._polling_interval)
 
 
     def _read(self):
         while True:
-            data = bytes(_retry(lambda: self._bus.read_i2c_block_data(
-                self._address, self._CMD_READ, 8), self._polling_interval))
+            try:
+                return self._send_read()
+            except OSError:
+                print("[vertpantilt] Read: OS error", file=sys.stderr)
+                time.sleep(self._polling_interval)
+
+
+    def _send_move(self, vert, pan, tilt):
+        data = struct.pack(">HBB", vert, pan, tilt)
+        checksum = (0xFF - (sum(data) & 0xFF) + 1) & 0xFF
+        data += bytes([checksum])
+        self._bus.write_i2c_block_data(self._address, self._CMD_MOVE, data)
+
+
+    def _send_read(self):
+        while True:
+            data = bytes(self._bus.read_i2c_block_data(
+                self._address, self._CMD_READ, 8))
             if sum(data) & 0xFF == 0:
                 return struct.unpack(">HBBBBBB", data)[:-1]
             print("[vertpantilt] Checksum error", file=sys.stderr)
@@ -76,12 +93,3 @@ class Driver(SMBusDriver):
 
 def _get_range(cfg):
     return range(cfg["start"], cfg["stop"] + 1, cfg["step"])
-
-
-def _retry(func, interval):
-    while True:
-        try:
-            return func()
-        except OSError:
-            print("[vertpantilt] OS error", file=sys.stderr)
-            time.sleep(interval)
