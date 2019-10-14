@@ -53,9 +53,10 @@ class Driver(SMBusDriver):
 
     def _move(self, vert, pan, tilt):
         data = struct.pack(">HBB", vert, pan, tilt)
-        _retry(lambda:
-            self._bus.write_i2c_block_data(self._address, self._CMD_MOVE, data),
-            self._polling_interval)
+        checksum = (0xFF - (sum(data) & 0xFF) + 1) & 0xFF
+        data += bytes([checksum])
+        _retry(lambda: self._bus.write_i2c_block_data(
+            self._address, self._CMD_MOVE, data), self._polling_interval)
         while True:
             time.sleep(self._polling_interval)
             cvert, cpan, ctilt, _, _, _ = self._read()
@@ -64,10 +65,13 @@ class Driver(SMBusDriver):
 
 
     def _read(self):
-        data = bytes(_retry(lambda:
-            self._bus.read_i2c_block_data(self._address, self._CMD_READ, 7),
-            self._polling_interval))
-        return struct.unpack(">HBBBBB", data)
+        while True:
+            data = bytes(_retry(lambda: self._bus.read_i2c_block_data(
+                self._address, self._CMD_READ, 8), self._polling_interval))
+            if sum(data) & 0xFF == 0:
+                return struct.unpack(">HBBBBBB", data)[:-1]
+            print("[vertpantilt] Checksum error", file=sys.stderr)
+            time.sleep(self._polling_interval)
 
 
 def _get_range(cfg):
