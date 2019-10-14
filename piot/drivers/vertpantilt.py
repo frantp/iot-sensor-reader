@@ -61,7 +61,6 @@ class Driver(SMBusDriver):
                     return
                 time.sleep(self._polling_interval)
             except OSError:
-                print("[vertpantilt] Move: OS error", file=sys.stderr)
                 time.sleep(self._polling_interval)
 
 
@@ -70,7 +69,6 @@ class Driver(SMBusDriver):
             try:
                 return self._send_read()
             except OSError:
-                print("[vertpantilt] Read: OS error", file=sys.stderr)
                 time.sleep(self._polling_interval)
 
 
@@ -87,7 +85,6 @@ class Driver(SMBusDriver):
                 self._address, self._CMD_READ, 8))
             if sum(data) & 0xFF == 0:
                 return struct.unpack(">HBBBBBB", data)[:-1]
-            print("[vertpantilt] Checksum error", file=sys.stderr)
             time.sleep(self._polling_interval)
 
 
