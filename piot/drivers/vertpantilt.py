@@ -15,7 +15,7 @@ class Driver(SMBusDriver):
 
 
     def __init__(self, address, bus=1, movement=None, drivers=None,
-        interval=0, read_interval=0.5, polling_interval=0.1):
+        interval=0, read_interval=0, polling_interval=0.1):
         super().__init__(bus)
         self._address = address
         self._busnum = bus
@@ -30,8 +30,9 @@ class Driver(SMBusDriver):
         for vert in _get_range(self._movement["vert"]):
             for pan in _get_range(self._movement["pan"]):
                 for tilt in _get_range(self._movement["tilt"]):
+                    time.sleep(self._polling_interval)
                     self._move(vert, pan, tilt)
-                    time.sleep(self._read_interval)
+                    time.sleep(self._polling_interval + self._read_interval)
                     cvert, cpan, ctilt, cflags, cbt1, cbt2 = self._read()
                     state = OrderedDict([
                         ("vert"    , cvert),
