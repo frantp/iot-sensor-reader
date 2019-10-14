@@ -35,14 +35,14 @@ class Driver(SMBusDriver):
                 for tilt in _get_range(self._movement["tilt"]):
                     self._move(vert, pan, tilt)
                     time.sleep(self._read_interval)
-                    vert, pan, tilt, flags, bt1, bt2 = self._read()
+                    cvert, cpan, ctilt, cflags, cbt1, cbt2 = self._read()
                     state = OrderedDict([
-                        ("vert"    , vert),
-                        ("pan"     , pan),
-                        ("tilt"    , tilt),
-                        ("flags"   , flags),
-                        ("battery1", bt1),
-                        ("battery2", bt2),
+                        ("vert"    , cvert),
+                        ("pan"     , cpan),
+                        ("tilt"    , ctilt),
+                        ("flags"   , cflags),
+                        ("battery1", cbt1),
+                        ("battery2", cbt2),
                     ])
                     yield self.sid(), int(time.time() * 1e9), state
                     if self._drivers:
