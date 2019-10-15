@@ -3,7 +3,7 @@ import struct
 import sys
 import time
 
-from ..core import SMBusDriver, run_drivers
+from ..core import SMBusDriver, run_drivers, round_step
 from smbus2 import SMBus
 
 
@@ -33,6 +33,14 @@ class Driver(SMBusDriver):
                     time.sleep(self._polling_interval)
                     self._move(vert, pan, tilt)
                     time.sleep(self._polling_interval + self._read_interval)
+                    # Drivers
+                    if self._drivers:
+                        self._bus.close()
+                        if self._lock: self._lock.release()
+                        yield from run_drivers(self._drivers, self._interval)
+                        if self._lock: self._lock.acquire()
+                        self._bus = SMBus(self._busnum)
+                    # Self
                     cvert, cpan, ctilt, cflags, cbt1, cbt2 = self._read()
                     state = OrderedDict([
                         ("vert"    , cvert),
@@ -42,13 +50,8 @@ class Driver(SMBusDriver):
                         ("battery1", cbt1),
                         ("battery2", cbt2),
                     ])
-                    yield self.sid(), int(time.time() * 1e9), state
-                    if self._drivers:
-                        self._bus.close()
-                        if self._lock: self._lock.release()
-                        yield from run_drivers(self._drivers, self._interval)
-                        if self._lock: self._lock.acquire()
-                        self._bus = SMBus(self._busnum)
+                    ts = int(time.time() * 1e9)
+                    yield self.sid(), round_step(ts, self._interval), state
 
 
     def _move(self, vert, pan, tilt):
