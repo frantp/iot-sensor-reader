@@ -39,7 +39,9 @@ def find(obj, key):
 
 def format_msg(timestamp, measurement, tags, fields):
     tstr = ",".join(["{}={}".format(k, v) for k, v in tags.items()])
-    fstr = ",".join(["{}={}".format(k, v) for k, v in fields.items()])
+    fstr = ",".join(["{0}={3}{1}{2}{3}".format(k, v,
+        "i"  if isinstance(v, int) else "",
+        "\"" if isinstance(v, str) else "") for k, v in fields.items()])
     return "{},{} {} {}".format(measurement, tstr, fstr, timestamp)
 
 
