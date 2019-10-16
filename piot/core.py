@@ -78,20 +78,17 @@ def run_drivers(cfg, sync=0):
             traceback.print_exc()
 
 
-def run(cfg, measurement, host, client=None, qos=0, sync=0):
+def run(cfg, host, client=None, qos=0, sync=0):
     for driver_id, ts, fields in run_drivers(cfg, sync):
         if fields:
             fields = OrderedDict([(k, v) \
                 for k, v in fields.items() if v is not None])
         if not fields:
             continue
-        tags = OrderedDict([
-            ("host", host),
-            ("sid", driver_id),
-        ])
-        payload = format_msg(ts, measurement, tags, fields)
+        tags = OrderedDict([("host", host)])
+        payload = format_msg(ts, driver_id, tags, fields)
         if client:
-            topic = "{}/{}/{}".format(measurement, host, driver_id)
+            topic = "data/{}/{}".format(host, driver_id)
             client.publish(topic, payload, qos, True)
         else:
             print(payload)
@@ -105,7 +102,6 @@ def main():
     # Read configuration
     cfg = toml.load(cfg_file)
     interval = cfg.get("interval", 0)
-    measurement = cfg.get("measurement", "data")
     host = cfg.get("host", socket.gethostname())
     drivers_cfg = cfg.get("drivers", {})
 
@@ -125,8 +121,7 @@ def main():
     try:
         with GPIOContext(drivers_cfg):
             while True:
-                run(drivers_cfg, measurement, host,
-                    mqtt_client, mqtt_qos, interval)
+                run(drivers_cfg, host, mqtt_client, mqtt_qos, interval)
     finally:
         if mqtt_client:
             mqtt_client.disconnect()
