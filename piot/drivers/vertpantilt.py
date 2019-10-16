@@ -27,6 +27,7 @@ class Driver(SMBusDriver):
 
 
     def run(self):
+        sync_ns = int(self._interval * 1e9)
         for vert in _get_range(self._movement["vert"]):
             for pan in _get_range(self._movement["pan"]):
                 for tilt in _get_range(self._movement["tilt"]):
@@ -41,17 +42,17 @@ class Driver(SMBusDriver):
                         if self._lock: self._lock.acquire()
                         self._bus = SMBus(self._busnum)
                     # Self
-                    cvert, cpan, ctilt, cflags, cbt1, cbt2 = self._read()
+                    cvert, cpan, ctilt, cflags, cb1v, cb2v = self._read()
                     state = OrderedDict([
-                        ("vert"    , cvert),
-                        ("pan"     , cpan),
-                        ("tilt"    , ctilt),
-                        ("flags"   , cflags),
-                        ("battery1", cbt1),
-                        ("battery2", cbt2),
+                        ("vert"     , cvert),
+                        ("pan"      , cpan),
+                        ("tilt"     , ctilt),
+                        ("flags"    , cflags),
+                        ("b1voltage", cb1v / 10),
+                        ("b2voltage", cb2v / 10),
                     ])
                     ts = int(time.time() * 1e9)
-                    yield self.sid(), round_step(ts, self._interval), state
+                    yield self.sid(), round_step(ts, sync_ns), state
 
 
     def _move(self, vert, pan, tilt):

@@ -54,6 +54,7 @@ def round_step(x, step):
 
 
 def run_drivers(cfg, sync=0):
+    sync_ns = int(sync * 1e9)
     time.sleep(sync_wait(sync))
     for driver_id in cfg:
         try:
@@ -70,7 +71,7 @@ def run_drivers(cfg, sync=0):
                     if not res:
                         continue
                     for did, ts, fields in res:
-                        yield did, round_step(ts, sync), fields
+                        yield did, round_step(ts, sync_ns), fields
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
