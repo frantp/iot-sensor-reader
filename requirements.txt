@@ -11,6 +11,7 @@ adafruit-circuitpython-bme680   # bme680
 adafruit-circuitpython-dht      # dht
 adafruit-circuitpython-hcsr04   # hcsr04
 adafruit-circuitpython-mlx90614 # mlx90614
+adafruit-circuitpython-ads1x15  # pt100
 adafruit-circuitpython-tsl2561  # tsl2561
 adafruit-circuitpython-tsl2591  # tsl2591
 Adafruit-SSD1306                # ssd1306
