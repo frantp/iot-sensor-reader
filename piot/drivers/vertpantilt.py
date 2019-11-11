@@ -10,7 +10,7 @@ import RPi.GPIO as GPIO
 
 
 # Designed to work with arduino-vertpantilt:
-# https://github.com/frantp/arduino-vertpantilt
+# https://github.com/frantp/vertpantilt
 class Driver(SMBusDriver):
     _CMD_MOVE = 0x4D
     _CMD_READ = 0x52
