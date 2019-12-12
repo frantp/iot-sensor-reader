@@ -97,6 +97,7 @@ def run(cfg, host, client=None, qos=0, sync=0):
 def main():
     if len(sys.argv) <= 1:
         print("Usage: {} <cfg_file>".format(sys.argv[0]))
+        exit()
     cfg_file  = sys.argv[1]
 
     # Read configuration
