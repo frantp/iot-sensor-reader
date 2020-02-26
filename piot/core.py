@@ -70,8 +70,10 @@ def run_drivers(cfg, sync=0):
                     res = driver.run()
                     if not res:
                         continue
-                    for did, ts, fields in res:
-                        yield did, round_step(ts, sync_ns), fields
+                    for did, ts, fields, *tags in res:
+                        tags.extend([(driver_id + "." + k, v)
+                            for k, v in dcfg.items() if type(v) in (int, float, bool, str)])
+                        yield (did, round_step(ts, sync_ns), fields, *tags)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
@@ -79,14 +81,14 @@ def run_drivers(cfg, sync=0):
 
 
 def run(cfg, host, client=None, qos=0, sync=0):
-    for driver_id, ts, fields in run_drivers(cfg, sync):
+    for driver_id, ts, fields, *tags in run_drivers(cfg, sync):
         if fields:
             fields = OrderedDict([(k, v) \
                 for k, v in fields.items() if v is not None])
         if not fields:
             continue
-        tags = OrderedDict([("host", host)])
-        payload = format_msg(ts, driver_id, tags, fields)
+        dtags = OrderedDict([("host", host)] + tags)
+        payload = format_msg(ts, driver_id, dtags, fields)
         if client:
             topic = "data/{}/{}".format(host, driver_id)
             client.publish(topic, payload, qos, True)
@@ -98,7 +100,7 @@ def main():
     if len(sys.argv) <= 1:
         print("Usage: {} <cfg_file>".format(sys.argv[0]))
         exit()
-    cfg_file  = sys.argv[1]
+    cfg_file = sys.argv[1]
 
     # Read configuration
     cfg = toml.load(cfg_file)
