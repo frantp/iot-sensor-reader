@@ -246,11 +246,12 @@ class SerialDriver(DriverBase):
         super().close()
 
 
-    def _cmd(self, cmd, size=1):
+    def _cmd(self, cmd, size=0):
         self._serial.write(cmd)
         self._serial.flush()
         time.sleep(0.1)
-        return self._serial.read(size)
+        if size > 0:
+            return self._serial.read(size)
 
 
 if __name__ == "__main__":
