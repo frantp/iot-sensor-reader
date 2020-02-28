@@ -92,6 +92,7 @@ def run(cfg, host, client=None, qos=0, sync=0):
         if client:
             topic = "data/{}/{}".format(host, driver_id)
             client.publish(topic, payload, qos, True)
+            print(payload)
         else:
             print(payload)
 
@@ -115,7 +116,7 @@ def main():
         mqtt_host = mqtt_cfg.get("host", "localhost")
         mqtt_port = mqtt_cfg.get("port", 1883)
         mqtt_qos = mqtt_cfg.get("qos", 2)
-        print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
+        #print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
         mqtt_client = mqtt.Client(host, clean_session=False)
         mqtt_client.connect(mqtt_host, mqtt_port)
         mqtt_client.loop_start()
