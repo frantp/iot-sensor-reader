@@ -17,7 +17,8 @@ class Driver(SMBusDriver):
 
 
     def __init__(self, address, bus=1, movement=None, drivers=None,
-        interval=0, read_interval=0, polling_interval=0.1, reset_pin=None):
+        interval=0, read_interval=0, vert_interval=0, polling_interval=0.1,
+        reset_pin=None):
         super().__init__(bus)
         self._address = address
         self._busnum = bus
@@ -25,6 +26,7 @@ class Driver(SMBusDriver):
         self._drivers = drivers
         self._interval = interval
         self._read_interval = read_interval
+        self._vert_interval = vert_interval
         self._polling_interval = polling_interval
         self._reset_pin = reset_pin
         if self._reset_pin is not None:
@@ -35,10 +37,14 @@ class Driver(SMBusDriver):
         sync_ns = int(self._interval * 1e9)
         try:
             for vert in _get_range(self._movement["vert"]):
+                first = True
                 for pan in _get_range(self._movement["pan"]):
                     for tilt in _get_range(self._movement["tilt"]):
                         time.sleep(self._polling_interval)
                         self._move(vert, pan, tilt)
+                        if first:
+                            first = False
+                            time.sleep(self._vert_interval)
                         time.sleep(
                             self._polling_interval + self._read_interval)
                         # Drivers
