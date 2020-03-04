@@ -27,20 +27,30 @@ def _check(res):
 
 
 class Driver(SerialDriver):
-    calibrated = False
+    zerocalibrated = False
+    spancalibrated = False
 
 
-    def __init__(self, port, calibrate=False):
+    def __init__(self, port, zerocalibrate=False, spancalibrate=False,
+        autocalibrate=True):
         super().__init__(port, 9600)
-        self.calibrate = calibrate
+        self.zerocalibrate = zerocalibrate
+        self.spancalibrate = spancalibrate
+        self.autocalibrate = autocalibrate
 
 
     def run(self):
         ts = int(time.time() * 1e9)
-        if self.calibrate and not Driver.calibrated:
+        if self.zerocalibrate and not Driver.zerocalibrated:
             self._cmd(_CALZERO_SEQ, 9)
-            Driver.calibrated = True
-        self._cmd(_ABCDISABLE_SEQ, 9)
+            Driver.zerocalibrated = True
+        if self.spancalibrate and not Driver.spancalibrated:
+            self._cmd(_CALZERO_SEQ, 9)
+            Driver.spancalibrated = True
+        if self.autocalibrate:
+            self._cmd(_ABCENABLE_SEQ, 9)
+        else:
+            self._cmd(_ABCDISABLE_SEQ, 9)
         res = self._cmd(_REQUEST_SEQ, 9)
         if res[0:2] != b"\xFF\x86" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
