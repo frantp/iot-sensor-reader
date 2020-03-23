@@ -53,6 +53,20 @@ def round_step(x, step):
     return x // step * step if step else x
 
 
+def init_mqtt(host, cfg):
+    mqtt_cfg = cfg.get("mqtt", None)
+    if mqtt_cfg is None:
+        return None, 0
+    mqtt_host = mqtt_cfg.get("host", "localhost")
+    mqtt_port = mqtt_cfg.get("port", 1883)
+    mqtt_qos = mqtt_cfg.get("qos", 2)
+    # print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
+    mqtt_client = mqtt.Client(host, clean_session=False)
+    mqtt_client.connect(mqtt_host, mqtt_port)
+    mqtt_client.loop_start()
+    return mqtt_client, mqtt_qos
+
+
 def run_drivers(cfg, sync=0):
     sync_ns = int(sync * 1e9)
     time.sleep(sync_wait(sync))
@@ -111,16 +125,7 @@ def main():
     drivers_cfg = cfg.get("drivers", {})
 
     # Connect to MQTT broker, if necessary
-    mqtt_client, mqtt_qos = None, 0
-    mqtt_cfg = cfg.get("mqtt", None)
-    if mqtt_cfg is not None:
-        mqtt_host = mqtt_cfg.get("host", "localhost")
-        mqtt_port = mqtt_cfg.get("port", 1883)
-        mqtt_qos = mqtt_cfg.get("qos", 2)
-        #print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
-        mqtt_client = mqtt.Client(host, clean_session=False)
-        mqtt_client.connect(mqtt_host, mqtt_port)
-        mqtt_client.loop_start()
+    mqtt_client, mqtt_qos = init_mqtt(host, cfg)
 
     # Run drivers
     try:
