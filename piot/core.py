@@ -66,13 +66,14 @@ def run_drivers(cfg, sync=0):
                 driver_module = importlib.import_module(
                     "piot.drivers." + driver_id)
                 with ActivationContext(activation_pin), \
-                     getattr(driver_module, "Driver")(**dcfg) as driver:
+                        getattr(driver_module, "Driver")(**dcfg) as driver:
                     res = driver.run()
                     if not res:
                         continue
                     for did, ts, fields, *tags in res:
                         tags.extend([(driver_id + "." + k, v)
-                            for k, v in dcfg.items() if type(v) in (int, float, bool, str)])
+                                    for k, v in dcfg.items()
+                                    if type(v) in (int, float, bool, str)])
                         yield (did, round_step(ts, sync_ns), fields, *tags)
         except (KeyboardInterrupt, SystemExit):
             raise
@@ -83,15 +84,15 @@ def run_drivers(cfg, sync=0):
 def run(cfg, host, client=None, qos=0, sync=0):
     for driver_id, ts, fields, *tags in run_drivers(cfg, sync):
         if fields:
-            fields = OrderedDict([(k, v) \
-                for k, v in fields.items() if v is not None])
+            fields = OrderedDict([(k, v) for k, v in fields.items()
+                                  if v is not None])
         if not fields:
             continue
         dtags = OrderedDict([("host", host)] + tags)
         payload = format_msg(ts, driver_id, dtags, fields)
         if client:
             topic = "data/{}/{}".format(host, driver_id)
-            client.publish(topic, payload, qos, True)
+            client.publish(topic, payload, qos, retain=True)
             print(payload)
         else:
             print(payload)
@@ -137,14 +138,11 @@ class GPIOContext:
         pin_list = list(find(cfg, ACT_PIN_ID))
         GPIO.setup(pin_list, GPIO.OUT, initial=GPIO.HIGH)
 
-
     def close(self):
         GPIO.cleanup()
 
-
     def __enter__(self):
         return self
-
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
@@ -158,27 +156,25 @@ class ActivationContext:
             self._lock = get_lock(
                 "{}/gpio{}.lock".format(LOCK_PREFIX, self._pin))
 
-
     def open(self):
         if not self._pin or self._open:
             return
         self._open = True
-        if self._lock: self._lock.acquire()
+        if self._lock:
+            self._lock.acquire()
         GPIO.output(self._pin, GPIO.LOW)
-
 
     def close(self):
         if not self._pin or not self._open:
             return
         GPIO.output(self._pin, GPIO.HIGH)
-        if self._lock: self._lock.release()
+        if self._lock:
+            self._lock.release()
         self._open = False
-
 
     def __enter__(self):
         self.open()
         return self
-
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
@@ -188,27 +184,24 @@ class DriverBase:
     def __init__(self, lock_file=None):
         self._open = True
         self._lock = get_lock(lock_file) if lock_file else None
-        if self._lock: self._lock.acquire()
-
+        if self._lock:
+            self._lock.acquire()
 
     def close(self):
         if not self._open:
             return
-        if self._lock: self._lock.release()
+        if self._lock:
+            self._lock.release()
         self._open = False
-
 
     def sid(self):
         return self.__class__.__module__.split(".")[-1]
 
-
     def run(self):
         raise NotImplementedError()
 
-
     def __enter__(self):
         return self
-
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
@@ -224,11 +217,11 @@ class SMBusDriver(I2CDriver):
         super().__init__()
         self._bus = SMBus(bus)
 
-
     def close(self):
         if not self._open:
             return
-        if self._bus: self._bus.close()
+        if self._bus:
+            self._bus.close()
         super().close()
 
 
@@ -239,13 +232,12 @@ class SerialDriver(DriverBase):
         self._serial.reset_input_buffer()
         self._serial.reset_output_buffer()
 
-
     def close(self):
         if not self._open:
             return
-        if self._serial: self._serial.close()
+        if self._serial:
+            self._serial.close()
         super().close()
-
 
     def _cmd(self, cmd, size=0):
         self._serial.write(cmd)

@@ -30,14 +30,12 @@ class Driver(SerialDriver):
     zerocalibrated = False
     spancalibrated = False
 
-
     def __init__(self, port, zerocalibrate=False, spancalibrate=False,
         autocalibrate=True):
         super().__init__(port, 9600)
         self.zerocalibrate = zerocalibrate
         self.spancalibrate = spancalibrate
         self.autocalibrate = autocalibrate
-
 
     def run(self):
         ts = int(time.time() * 1e9)

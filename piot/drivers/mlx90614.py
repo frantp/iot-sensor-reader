@@ -13,7 +13,6 @@ class Driver(I2CDriver):
         i2c = busio.I2C(board.SCL, board.SDA)
         self._sensor = MLX90614(i2c, address=address)
 
-
     def run(self):
         return [(self.sid(), int(time.time() * 1e9), OrderedDict([
             ("ambient_temperature", self._sensor.ambient_temperature),

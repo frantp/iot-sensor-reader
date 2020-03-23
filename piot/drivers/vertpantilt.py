@@ -15,10 +15,9 @@ class Driver(SMBusDriver):
     _CMD_MOVE = 0x4D
     _CMD_READ = 0x52
 
-
     def __init__(self, address, bus=1, movement=None, drivers=None,
-        interval=0, read_interval=0, vert_interval=0, polling_interval=0.1,
-        reset_pin=None):
+                 interval=0, read_interval=0, vert_interval=0,
+                 polling_interval=0.1, reset_pin=None):
         super().__init__(bus)
         self._address = address
         self._busnum = bus
@@ -31,7 +30,6 @@ class Driver(SMBusDriver):
         self._reset_pin = reset_pin
         if self._reset_pin is not None:
             GPIO.setup(self._reset_pin, GPIO.IN)
-
 
     def run(self):
         sync_ns = int(self._interval * 1e9)
@@ -50,10 +48,12 @@ class Driver(SMBusDriver):
                         # Drivers
                         if self._drivers:
                             self._bus.close()
-                            if self._lock: self._lock.release()
+                            if self._lock:
+                                self._lock.release()
                             yield from run_drivers(
                                 self._drivers, self._interval)
-                            if self._lock: self._lock.acquire()
+                            if self._lock:
+                                self._lock.acquire()
                             self._bus = SMBus(self._busnum)
                         # Self
                         cvert, cpan, ctilt, cflags, cb1v, cb2v = self._read()
@@ -78,7 +78,6 @@ class Driver(SMBusDriver):
                     time.sleep(3)
                     break
 
-
     def _move(self, vert, pan, tilt, check_reset=True):
         while True:
             try:
@@ -91,7 +90,6 @@ class Driver(SMBusDriver):
             except OSError:
                 time.sleep(self._polling_interval)
 
-
     def _read(self, check_reset=True):
         while True:
             try:
@@ -99,13 +97,11 @@ class Driver(SMBusDriver):
             except OSError:
                 time.sleep(self._polling_interval)
 
-
     def _send_move(self, vert, pan, tilt):
         data = struct.pack(">HBB", vert, pan, tilt)
         checksum = (0xFF - (sum(data) & 0xFF) + 1) & 0xFF
         data += bytes([checksum])
         self._bus.write_i2c_block_data(self._address, self._CMD_MOVE, data)
-
 
     def _send_read(self, check_reset=True):
         if check_reset and self._reset_pin is not None \

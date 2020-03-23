@@ -13,7 +13,6 @@ class Driver(I2CDriver):
         i2c = busio.I2C(board.SCL, board.SDA)
         self._sensor = ADXL345(i2c, address=address)
 
-
     def run(self):
         ts, x, y, z = int(time.time() * 1e9), *self._sensor.acceleration
         return [(self.sid(), ts, OrderedDict([

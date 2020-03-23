@@ -13,7 +13,6 @@ class Driver(I2CDriver):
         i2c = busio.I2C(board.SCL, board.SDA)
         self._sensor = AMG88XX(i2c, addr=address)
 
-
     def run(self):
         ts, temp, px = int(time.time() * 1e9), \
             self._sensor.temperature, self._sensor.pixels

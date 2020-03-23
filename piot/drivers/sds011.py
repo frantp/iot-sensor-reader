@@ -37,7 +37,6 @@ class Driver(SerialDriver):
         res = self._cmd(_seq(_SETCONT_CODES), 10)
         if res[0:3] != b"\xAA\xC5\x08" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
-        
 
     def run(self):
         ts = int(time.time() * 1e9)

@@ -17,7 +17,6 @@ class Driver(I2CDriver):
         if integration_time:
             self._sensor.integration_time = integration_time
 
-
     def run(self):
         return [(self.sid(), int(time.time() * 1e9), OrderedDict([
             ("lux", self._sensor.lux),
