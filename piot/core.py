@@ -5,7 +5,6 @@ from filelock import FileLock
 import importlib
 import os
 import paho.mqtt.client as mqtt
-import RPi.GPIO as GPIO
 from serial import Serial
 from smbus2 import SMBus
 import socket
@@ -14,6 +13,10 @@ import time
 import toml
 import traceback
 
+try:
+    import RPi.GPIO as GPIO
+except:
+    GPIO = None
 
 ACT_PIN_ID = "ACTIVATION_PIN"
 LOCK_PREFIX = "/run/lock/piot"
