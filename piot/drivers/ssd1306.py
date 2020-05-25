@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import datetime
 import socket
 import subprocess
@@ -40,7 +39,7 @@ class Driver(DriverBase):
         # Retrieve values
         timestr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
-            ssid = subprocess.check_output("/sbin/iwgetid -r", shell = True) \
+            ssid = subprocess.check_output("/sbin/iwgetid -r", shell=True) \
                 .decode("utf-8")
         except:
             ssid = "---"
