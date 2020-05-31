@@ -25,8 +25,9 @@ __all__ = [
 ]
 
 
-TAG_NOLIB = 0
-TAG_ERROR = 1
+TAG_ERROR = "ERROR"
+ERROR_NOLIB = "NOLIB"
+ERROR_EXCEP = "EXCEP"
 
 
 ACT_PIN_ID = "ACTIVATION_PIN"
@@ -94,10 +95,10 @@ def collect(cfg, sync=0):
                 raise
             except ImportError:
                 ts = round_step(time.time_ns(), sync_ns)
-                yield (driver_id, ts, None, TAG_NOLIB)
+                yield (driver_id, ts, None, (TAG_ERROR, ERROR_NOLIB))
             except Exception:
                 ts = round_step(time.time_ns(), sync_ns)
-                yield (driver_id, ts, None, TAG_ERROR)
+                yield (driver_id, ts, None, (TAG_ERROR, ERROR_EXCEP))
 
 
 def main():
@@ -127,8 +128,6 @@ def main():
                 if fields:
                     fields = OrderedDict([(k, v) for k, v in fields.items()
                                          if v is not None])
-                if not fields:
-                    continue
                 dtags = OrderedDict([("host", host)] + tags)
                 for output in outputs:
                     output.run(driver_id, ts, fields, dtags)
