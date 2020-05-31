@@ -3,7 +3,7 @@ import struct
 import sys
 import time
 
-from ..core import SMBusDriver, run_drivers, round_step
+from ..core import SMBusDriver, recv, round_step
 from smbus2 import SMBus
 
 import RPi.GPIO as GPIO
@@ -15,14 +15,14 @@ class Driver(SMBusDriver):
     _CMD_MOVE = 0x4D
     _CMD_READ = 0x52
 
-    def __init__(self, address, bus=1, movement=None, drivers=None,
+    def __init__(self, address, bus=1, movement=None, inputs=None,
                  interval=0, read_interval=0, vert_interval=0,
                  polling_interval=0.1, reset_pin=None):
         super().__init__(bus)
         self._address = address
         self._busnum = bus
         self._movement = movement
-        self._drivers = drivers
+        self._inputs = inputs
         self._interval = interval
         self._read_interval = read_interval
         self._vert_interval = vert_interval
@@ -45,13 +45,12 @@ class Driver(SMBusDriver):
                             time.sleep(self._vert_interval)
                         time.sleep(
                             self._polling_interval + self._read_interval)
-                        # Drivers
-                        if self._drivers:
+                        # Inputs
+                        if self._inputs:
                             self._bus.close()
                             if self._lock:
                                 self._lock.release()
-                            yield from run_drivers(
-                                self._drivers, self._interval)
+                            yield from recv(self._inputs, self._interval)
                             if self._lock:
                                 self._lock.acquire()
                             self._bus = SMBus(self._busnum)

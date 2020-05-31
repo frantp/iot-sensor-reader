@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 from collections import OrderedDict
+import contextlib
 from filelock import FileLock
 import importlib
 import os
-import paho.mqtt.client as mqtt
 from serial import Serial
 from smbus2 import SMBus
 import socket
@@ -17,6 +17,17 @@ try:
     import RPi.GPIO as GPIO
 except:
     GPIO = None
+
+
+__all__ = [
+    "collect", "GPIOContext", "ActivationContext",
+    "DriverBase", "I2CDriver", "SMBusDriver", "SerialDriver"
+]
+
+
+TAG_NOLIB = 0
+TAG_ERROR = 1
+
 
 ACT_PIN_ID = "ACTIVATION_PIN"
 LOCK_PREFIX = "/run/lock/piot"
@@ -42,9 +53,12 @@ def find(obj, key):
 
 def format_msg(timestamp, measurement, tags, fields):
     tstr = ",".join(["{}={}".format(k, v) for k, v in tags.items()])
-    fstr = ",".join(["{0}={3}{1}{2}{3}".format(k, v,
-        "i"  if isinstance(v, int) else "",
-        "\"" if isinstance(v, str) else "") for k, v in fields.items()])
+    fstr = ",".join(["{0}={3}{1}{2}{3}".format(
+        k, v,
+        "i" if isinstance(v, int) else "",
+        "\"" if isinstance(v, str) else "")
+        for k, v in fields.items()]
+    )
     return "{},{} {} {}".format(measurement, tstr, fstr, timestamp)
 
 
@@ -56,63 +70,37 @@ def round_step(x, step):
     return x // step * step if step else x
 
 
-def init_mqtt(host, cfg):
-    mqtt_cfg = cfg.get("mqtt", None)
-    if mqtt_cfg is None:
-        return None, 0
-    mqtt_host = mqtt_cfg.get("host", "localhost")
-    mqtt_port = mqtt_cfg.get("port", 1883)
-    mqtt_qos = mqtt_cfg.get("qos", 2)
-    # print(f"Connecting to MQTT broker at '{mqtt_host}:{mqtt_port}'")
-    mqtt_client = mqtt.Client(host, clean_session=False)
-    mqtt_client.connect(mqtt_host, mqtt_port)
-    mqtt_client.loop_start()
-    return mqtt_client, mqtt_qos
-
-
-def run_drivers(cfg, sync=0):
+def collect(cfg, sync=0):
     sync_ns = int(sync * 1e9)
     time.sleep(sync_wait(sync))
     for driver_id in cfg:
-        try:
-            for dcfg in cfg[driver_id]:
-                activation_pin = None
-                if ACT_PIN_ID in dcfg:
-                    activation_pin = dcfg[ACT_PIN_ID]
-                    dcfg = {k: v for k, v in dcfg.items() if k != ACT_PIN_ID}
+        for dcfg in cfg[driver_id]:
+            activation_pin = None
+            if ACT_PIN_ID in dcfg:
+                activation_pin = dcfg[ACT_PIN_ID]
+                dcfg = {k: v for k, v in dcfg.items() if k != ACT_PIN_ID}
+            try:
                 driver_module = importlib.import_module(
-                    "piot.drivers." + driver_id)
+                    "piot.inputs." + driver_id)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                ts = round_step(time.time_ns(), sync_ns)
+                yield (driver_id, ts, None, TAG_NOLIB)
+            else:
                 with ActivationContext(activation_pin), \
                         getattr(driver_module, "Driver")(**dcfg) as driver:
-                    res = driver.run()
-                    if not res:
-                        continue
-                    for did, ts, fields, *tags in res:
-                        tags.extend([(driver_id + "." + k, v)
-                                    for k, v in dcfg.items()
-                                    if type(v) in (int, float, bool, str)])
-                        yield (did, round_step(ts, sync_ns), fields, *tags)
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except:
-            traceback.print_exc()
-
-
-def run(cfg, host, client=None, qos=0, sync=0):
-    for driver_id, ts, fields, *tags in run_drivers(cfg, sync):
-        if fields:
-            fields = OrderedDict([(k, v) for k, v in fields.items()
-                                  if v is not None])
-        if not fields:
-            continue
-        dtags = OrderedDict([("host", host)] + tags)
-        payload = format_msg(ts, driver_id, dtags, fields)
-        if client:
-            topic = "data/{}/{}".format(host, driver_id)
-            client.publish(topic, payload, qos, retain=True)
-            print(payload)
-        else:
-            print(payload)
+                    try:
+                        res = driver.run()
+                    except:
+                        ts = round_step(time.time_ns(), sync_ns)
+                        yield (driver_id, ts, None, TAG_ERROR)
+                    else:
+                        for did, ts, fields, *tags in res:
+                            tags.extend([(driver_id + "." + k, v)
+                                        for k, v in dcfg.items()
+                                        if type(v) in (int, float, bool, str)])
+                            yield (did, round_step(ts, sync_ns), fields, *tags)
 
 
 def main():
@@ -125,19 +113,28 @@ def main():
     cfg = toml.load(cfg_file)
     interval = cfg.get("interval", 0)
     host = cfg.get("host", socket.gethostname())
-    drivers_cfg = cfg.get("drivers", {})
-
-    # Connect to MQTT broker, if necessary
-    mqtt_client, mqtt_qos = init_mqtt(host, cfg)
+    inputs_cfg = cfg.get("inputs", {})
+    outputs_cfg = cfg.get("outputs", {})
 
     # Run drivers
-    try:
-        with GPIOContext(drivers_cfg):
-            while True:
-                run(drivers_cfg, host, mqtt_client, mqtt_qos, interval)
-    finally:
-        if mqtt_client:
-            mqtt_client.disconnect()
+    with GPIOContext(inputs_cfg), contextlib.ExitStack() as stack:
+        outputs = []
+        for driver_id in outputs_cfg:
+            for dcfg in outputs_cfg[driver_id]:
+                driver_module = importlib.import_module(
+                    "piot.outputs." + driver_id)
+                driver = getattr(driver_module, "Driver")(**dcfg)
+                outputs.append(stack.enter_context(driver))
+        while True:
+            for driver_id, ts, fields, *tags in collect(cfg, interval):
+                if fields:
+                    fields = OrderedDict([(k, v) for k, v in fields.items()
+                                        if v is not None])
+                if not fields:
+                    continue
+                dtags = OrderedDict([("host", host)] + tags)
+                for output in outputs:
+                    output.run(driver_id, ts, fields, dtags)
 
 
 class GPIOContext:

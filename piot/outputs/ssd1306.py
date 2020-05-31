@@ -12,8 +12,9 @@ class Driver(DriverBase):
     def __init__(self, model64, rst=None):
         super().__init__()
         self._disp = SSD1306_128_64(rst) if model64 else SSD1306_128_32(rst)
+        self._buffer = {}
 
-    def run(self):
+    def run(self, driver_id, ts, fields, tags):
         # Initialize library
         self._disp.begin()
 
@@ -56,5 +57,3 @@ class Driver(DriverBase):
         # Display image
         self._disp.image(image)
         self._disp.display()
-
-        return [(self.sid(), int(time.time() * 1e9), None)]
