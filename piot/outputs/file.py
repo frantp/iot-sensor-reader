@@ -6,7 +6,10 @@ from ..core import DriverBase, format_msg
 class Driver(DriverBase):
     def __init__(self, file="/dev/stdout"):
         super().__init__()
-        self._fd = open(file, "a")
+        try:
+            self._fd = open(file, "a")
+        except OSError:
+            self._fd = open(file, "w")
 
     def close(self):
         self._fd.close()

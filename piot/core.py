@@ -15,7 +15,7 @@ import traceback
 
 try:
     import RPi.GPIO as GPIO
-except:
+except ImportError:
     GPIO = None
 
 
@@ -75,32 +75,29 @@ def collect(cfg, sync=0):
     time.sleep(sync_wait(sync))
     for driver_id in cfg:
         for dcfg in cfg[driver_id]:
-            activation_pin = None
-            if ACT_PIN_ID in dcfg:
-                activation_pin = dcfg[ACT_PIN_ID]
-                dcfg = {k: v for k, v in dcfg.items() if k != ACT_PIN_ID}
             try:
+                activation_pin = None
+                if ACT_PIN_ID in dcfg:
+                    activation_pin = dcfg[ACT_PIN_ID]
+                    dcfg = {k: v for k, v in dcfg.items() if k != ACT_PIN_ID}
                 driver_module = importlib.import_module(
                     "piot.inputs." + driver_id)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except:
-                ts = round_step(time.time_ns(), sync_ns)
-                yield (driver_id, ts, None, TAG_NOLIB)
-            else:
                 with ActivationContext(activation_pin), \
                         getattr(driver_module, "Driver")(**dcfg) as driver:
-                    try:
-                        res = driver.run()
-                    except:
-                        ts = round_step(time.time_ns(), sync_ns)
-                        yield (driver_id, ts, None, TAG_ERROR)
-                    else:
-                        for did, ts, fields, *tags in res:
-                            tags.extend([(driver_id + "." + k, v)
-                                        for k, v in dcfg.items()
-                                        if type(v) in (int, float, bool, str)])
-                            yield (did, round_step(ts, sync_ns), fields, *tags)
+                    res = driver.run()
+                    for did, ts, fields, *tags in res:
+                        tags.extend([(driver_id + "." + k, v)
+                                    for k, v in dcfg.items()
+                                    if type(v) in (int, float, bool, str)])
+                        yield (did, round_step(ts, sync_ns), fields, *tags)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except ImportError:
+                ts = round_step(time.time_ns(), sync_ns)
+                yield (driver_id, ts, None, TAG_NOLIB)
+            except Exception:
+                ts = round_step(time.time_ns(), sync_ns)
+                yield (driver_id, ts, None, TAG_ERROR)
 
 
 def main():
@@ -126,10 +123,10 @@ def main():
                 driver = getattr(driver_module, "Driver")(**dcfg)
                 outputs.append(stack.enter_context(driver))
         while True:
-            for driver_id, ts, fields, *tags in collect(cfg, interval):
+            for driver_id, ts, fields, *tags in collect(inputs_cfg, interval):
                 if fields:
                     fields = OrderedDict([(k, v) for k, v in fields.items()
-                                        if v is not None])
+                                         if v is not None])
                 if not fields:
                     continue
                 dtags = OrderedDict([("host", host)] + tags)
