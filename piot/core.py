@@ -97,6 +97,7 @@ def collect(cfg, sync=0):
                 ts = round_step(time.time_ns(), sync_ns)
                 yield (driver_id, ts, None, (TAG_ERROR, ERROR_NOLIB))
             except Exception:
+                traceback.print_exc()
                 ts = round_step(time.time_ns(), sync_ns)
                 yield (driver_id, ts, None, (TAG_ERROR, ERROR_EXCEP))
 
@@ -130,7 +131,10 @@ def main():
                                          if v is not None])
                 dtags = OrderedDict([("host", host)] + tags)
                 for output in outputs:
-                    output.run(driver_id, ts, fields, dtags)
+                    try:
+                        output.run(driver_id, ts, fields, dtags)
+                    except Exception:
+                        traceback.print_exc()
 
 
 class GPIOContext:
