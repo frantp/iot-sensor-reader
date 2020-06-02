@@ -120,10 +120,13 @@ def main():
         outputs = []
         for driver_id in outputs_cfg:
             for dcfg in outputs_cfg[driver_id]:
-                driver_module = importlib.import_module(
-                    "piot.outputs." + driver_id)
-                driver = getattr(driver_module, "Driver")(**dcfg)
-                outputs.append(stack.enter_context(driver))
+                try:
+                    driver_module = importlib.import_module(
+                        "piot.outputs." + driver_id)
+                    driver = getattr(driver_module, "Driver")(**dcfg)
+                    outputs.append(stack.enter_context(driver))
+                except Exception:
+                    traceback.print_exc()
         while True:
             for driver_id, ts, fields, *tags in collect(inputs_cfg, interval):
                 if fields:
