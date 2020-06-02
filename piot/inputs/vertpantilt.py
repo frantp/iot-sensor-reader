@@ -64,7 +64,7 @@ class Driver(SMBusDriver):
                             ("b1voltage", cb1v / 10),
                             ("b2voltage", cb2v / 10),
                         ])
-                        ts = int(time.time() * 1e9)
+                        ts = time.time_ns()
                         yield self.sid(), round_step(ts, sync_ns), state
         except ResetError:
             self._move(0, 0, 0, False)

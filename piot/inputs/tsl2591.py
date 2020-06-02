@@ -18,7 +18,7 @@ class Driver(I2CDriver):
             self._sensor.integration_time = integration_time
 
     def run(self):
-        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), time.time_ns(), OrderedDict([
             ("lux", self._sensor.lux),
             ("visible", self._sensor.visible),
             ("infrared", self._sensor.infrared),

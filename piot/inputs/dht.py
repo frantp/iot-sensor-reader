@@ -11,7 +11,7 @@ class Driver(DriverBase):
         self._sensor = DHT11(pin) if dht11 else DHT22(pin)
 
     def run(self):
-        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), time.time_ns(), OrderedDict([
             ("temperature", self._sensor.temperature),
             ("humidity",    self._sensor.humidity),
         ]))]

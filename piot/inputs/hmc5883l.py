@@ -18,7 +18,7 @@ class Driver(SMBusDriver):
         self._bus.write_byte_data(self._address, _REG_MODE, 0x00)
 
     def run(self):
-        ts = int(time.time() * 1e9)
+        ts = time.time_ns()
         res = self._bus.read_i2c_block_data(self._address, _REG_DATA, 7)
         x, y, z, status = struct.unpack(">hhhB", bytearray(res))
         return [(self.sid(), ts, OrderedDict([

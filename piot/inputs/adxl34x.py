@@ -14,7 +14,7 @@ class Driver(I2CDriver):
         self._sensor = ADXL345(i2c, address=address)
 
     def run(self):
-        ts, x, y, z = int(time.time() * 1e9), *self._sensor.acceleration
+        ts, x, y, z = time.time_ns(), *self._sensor.acceleration
         return [(self.sid(), ts, OrderedDict([
             ("accel_x", x),
             ("accel_y", y),

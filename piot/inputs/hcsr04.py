@@ -11,7 +11,7 @@ class Driver(DriverBase):
         self._sensor = HCSR04(trigger_pin, echo_pin)
 
     def run(self):
-        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), time.time_ns(), OrderedDict([
             ("distance", self._sensor.distance),
         ]))]
 

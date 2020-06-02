@@ -15,7 +15,7 @@ class Driver(I2CDriver):
                                            refresh_rate=refresh_rate)
 
     def run(self):
-        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), time.time_ns(), OrderedDict([
             ("temperature", self._sensor.temperature),
             ("gas",         self._sensor.gas),
             ("humidity",    self._sensor.humidity),

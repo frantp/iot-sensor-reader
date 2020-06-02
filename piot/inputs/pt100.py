@@ -29,7 +29,7 @@ class Driver(I2CDriver):
         val = self._a * vx + self._b
         rx = self._c * val / (1 - val)
         t = (rx / 100 - 1) / self._FACTOR
-        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), time.time_ns(), OrderedDict([
             ("value", value),
             ("voltage", vx),
             ("temperature", t),

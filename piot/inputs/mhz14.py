@@ -38,7 +38,7 @@ class Driver(SerialDriver):
         self.autocalibrate = autocalibrate
 
     def run(self):
-        ts = int(time.time() * 1e9)
+        ts = time.time_ns()
         if self.zerocalibrate and not Driver.zerocalibrated:
             self._cmd(_CALZERO_SEQ, 9)
             Driver.zerocalibrated = True

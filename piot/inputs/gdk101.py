@@ -18,7 +18,7 @@ class Driver(SMBusDriver):
         self._address = address
 
     def run(self):
-        ts = int(time.time() * 1e9)
+        ts = time.time_ns()
         status, vibration = self._bus.read_i2c_block_data(
             self._address, _CMD_READ_STATUS, 2)
         minutes, seconds = self._bus.read_i2c_block_data(

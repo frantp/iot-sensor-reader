@@ -19,7 +19,7 @@ class Driver(SerialDriver):
         super().__init__(port, 115200)
 
     def run(self):
-        ts = int(time.time() * 1e9)
+        ts = time.time_ns()
         self._serial.read_until(b"\x59\x59")
         res = b"\x59\x59" + self._serial.read(7)
         if _check(res):

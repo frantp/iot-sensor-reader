@@ -14,7 +14,7 @@ class Driver(I2CDriver):
         self._sensor = Adafruit_BME280_I2C(i2c, address=address)
 
     def run(self):
-        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), time.time_ns(), OrderedDict([
             ("temperature", self._sensor.temperature),
             ("humidity",    self._sensor.humidity),
             ("pressure",    self._sensor.pressure),

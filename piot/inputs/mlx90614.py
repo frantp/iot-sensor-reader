@@ -14,7 +14,7 @@ class Driver(I2CDriver):
         self._sensor = MLX90614(i2c, address=address)
 
     def run(self):
-        return [(self.sid(), int(time.time() * 1e9), OrderedDict([
+        return [(self.sid(), time.time_ns(), OrderedDict([
             ("ambient_temperature", self._sensor.ambient_temperature),
             ("object_temperature", self._sensor.object_temperature),
         ]))]

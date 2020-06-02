@@ -14,7 +14,7 @@ class Driver(I2CDriver):
         self._sensor = AMG88XX(i2c, addr=address)
 
     def run(self):
-        ts, temp, px = int(time.time() * 1e9), \
+        ts, temp, px = time.time_ns(), \
             self._sensor.temperature, self._sensor.pixels
         data = OrderedDict()
         data["temperature"] = temp
