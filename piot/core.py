@@ -19,7 +19,7 @@ except ImportError:
 
 
 __all__ = [
-    "collect", "GPIOContext", "ActivationContext",
+    "get_inputs", "get_outputs", "collect", "GPIOContext", "ActivationContext",
     "DriverBase", "SMBusDriver", "SerialDriver"
 ]
 
@@ -58,6 +58,48 @@ def round_step(x, step):
     return x // step * step if step else x
 
 
+def get_inputs(cfg, stack):
+    if not cfg:
+        return None
+    inputs = []
+    for driver_id in cfg:
+        for dcfg in cfg[driver_id]:
+            try:
+                pin = None
+                if ACT_PIN_ID in dcfg:
+                    pin = dcfg[ACT_PIN_ID]
+                    dcfg = {k: v for k, v in dcfg.items()
+                            if k != ACT_PIN_ID}
+                driver_module = importlib.import_module(
+                    "piot.inputs." + driver_id)
+                driver = getattr(driver_module, "Driver")(**dcfg)
+                tags = [(driver_id + "." + k, v)
+                        for k, v in dcfg.items()
+                        if type(v) in (int, float, bool, str)]
+                inputs.append((stack.enter_context(driver), pin, *tags))
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception:
+                traceback.print_exc()
+    return inputs
+
+
+def get_outputs(cfg, stack):
+    outputs = []
+    for driver_id in cfg:
+        for dcfg in cfg[driver_id]:
+            try:
+                driver_module = importlib.import_module(
+                    "piot.outputs." + driver_id)
+                driver = getattr(driver_module, "Driver")(**dcfg)
+                outputs.append(stack.enter_context(driver))
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception:
+                traceback.print_exc()
+    return outputs
+
+
 def collect(inputs, sync=0):
     sync_ns = int(sync * 1e9)
     time.sleep(sync_wait(sync))
@@ -91,38 +133,8 @@ def main():
 
     # Run drivers
     with GPIOContext(inputs_cfg), contextlib.ExitStack() as stack:
-        inputs = []
-        for driver_id in inputs_cfg:
-            for dcfg in inputs_cfg[driver_id]:
-                try:
-                    pin = None
-                    if ACT_PIN_ID in dcfg:
-                        pin = dcfg[ACT_PIN_ID]
-                        dcfg = {k: v for k, v in dcfg.items()
-                                if k != ACT_PIN_ID}
-                    driver_module = importlib.import_module(
-                        "piot.inputs." + driver_id)
-                    driver = getattr(driver_module, "Driver")(**dcfg)
-                    tags = [(driver_id + "." + k, v)
-                            for k, v in dcfg.items()
-                            if type(v) in (int, float, bool, str)]
-                    inputs.append((stack.enter_context(driver), pin, *tags))
-                except (KeyboardInterrupt, SystemExit):
-                    raise
-                except Exception:
-                    traceback.print_exc()
-        outputs = []
-        for driver_id in outputs_cfg:
-            for dcfg in outputs_cfg[driver_id]:
-                try:
-                    driver_module = importlib.import_module(
-                        "piot.outputs." + driver_id)
-                    driver = getattr(driver_module, "Driver")(**dcfg)
-                    outputs.append(stack.enter_context(driver))
-                except (KeyboardInterrupt, SystemExit):
-                    raise
-                except Exception:
-                    traceback.print_exc()
+        inputs = get_inputs(inputs_cfg, stack)
+        outputs = get_outputs(outputs_cfg, stack)
         while True:
             for driver_id, ts, fields, *tags in collect(inputs, interval):
                 if fields:
