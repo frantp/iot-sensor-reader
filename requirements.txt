@@ -1,6 +1,5 @@
 toml
 pika
-filelock
 RPi.GPIO
 smbus2
 pyserial

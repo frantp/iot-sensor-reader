@@ -40,7 +40,8 @@ class Driver(SerialDriver):
 
     def run(self):
         ts = time.time_ns()
-        res = self._cmd(_seq(_REQUEST_CODES), 10)
+        with self._open_serial() as serial:
+            res = self._cmd(serial, _seq(_REQUEST_CODES), 10)
         if res[0:2] != b"\xAA\xC0" or _check(res):
             return ts, None
         pm25, pm10 = [x / 10 for x in struct.unpack("<HH", res[2:6])]

@@ -1,13 +1,13 @@
 from collections import OrderedDict
 import time
 
-from ..core import I2CDriver
+from ..core import DriverBase
 import board
 import busio
 from adafruit_mlx90614 import MLX90614
 
 
-class Driver(I2CDriver):
+class Driver(DriverBase):
     def __init__(self, address=0x5a):
         super().__init__()
         i2c = busio.I2C(board.SCL, board.SDA)

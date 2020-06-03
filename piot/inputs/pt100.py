@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import time
 
-from ..core import I2CDriver
+from ..core import DriverBase
 import board
 import busio
 from adafruit_ads1x15.ads1015 import ADS1015
@@ -10,7 +10,7 @@ from adafruit_ads1x15.ads1x15 import Mode
 from adafruit_ads1x15.analog_in import AnalogIn
 
 
-class Driver(I2CDriver):
+class Driver(DriverBase):
     _FACTOR = 0.00385
 
     def __init__(self, ads1015, positive_pin, negative_pin, r1, r2, vi=3.3,

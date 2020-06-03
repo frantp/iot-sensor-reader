@@ -2,7 +2,6 @@
 
 from collections import OrderedDict
 import contextlib
-from filelock import FileLock
 import importlib
 import os
 from serial import Serial
@@ -21,24 +20,12 @@ except ImportError:
 
 __all__ = [
     "collect", "GPIOContext", "ActivationContext",
-    "DriverBase", "I2CDriver", "SMBusDriver", "SerialDriver"
+    "DriverBase", "SMBusDriver", "SerialDriver"
 ]
 
 
 TAG_ERROR = "ERROR"
-ERROR_NOLIB = "NOLIB"
-ERROR_EXCEP = "EXCEP"
-
-
 ACT_PIN_ID = "ACTIVATION_PIN"
-LOCK_PREFIX = "/run/lock/piot"
-
-
-def get_lock(lock_file):
-    os.makedirs(os.path.dirname(lock_file), exist_ok=True)
-    if not os.path.isfile(lock_file):
-        os.mknod(lock_file)
-    return FileLock(lock_file)
 
 
 def find(obj, key):
@@ -71,35 +58,22 @@ def round_step(x, step):
     return x // step * step if step else x
 
 
-def collect(cfg, sync=0):
+def collect(inputs, sync=0):
     sync_ns = int(sync * 1e9)
     time.sleep(sync_wait(sync))
-    for driver_id in cfg:
-        for dcfg in cfg[driver_id]:
-            try:
-                activation_pin = None
-                if ACT_PIN_ID in dcfg:
-                    activation_pin = dcfg[ACT_PIN_ID]
-                    dcfg = {k: v for k, v in dcfg.items() if k != ACT_PIN_ID}
-                driver_module = importlib.import_module(
-                    "piot.inputs." + driver_id)
-                with ActivationContext(activation_pin), \
-                        getattr(driver_module, "Driver")(**dcfg) as driver:
-                    res = driver.run()
-                    for did, ts, fields, *tags in res:
-                        tags.extend([(driver_id + "." + k, v)
-                                    for k, v in dcfg.items()
-                                    if type(v) in (int, float, bool, str)])
-                        yield (did, round_step(ts, sync_ns), fields, *tags)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except ImportError:
-                ts = round_step(time.time_ns(), sync_ns)
-                yield (driver_id, ts, None, (TAG_ERROR, ERROR_NOLIB))
-            except Exception:
-                traceback.print_exc()
-                ts = round_step(time.time_ns(), sync_ns)
-                yield (driver_id, ts, None, (TAG_ERROR, ERROR_EXCEP))
+    for input, pin, *cfg_tags in inputs:
+        try:
+            with ActivationContext(pin):
+                res = input.run()
+                for did, ts, fields, *tags in res:
+                    tags.extend(cfg_tags)
+                    yield (did, round_step(ts, sync_ns), fields, *tags)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception:
+            traceback.print_exc()
+            ts = round_step(time.time_ns(), sync_ns)
+            yield (input.sid(), ts, None, (TAG_ERROR, None))
 
 
 def main():
@@ -117,6 +91,26 @@ def main():
 
     # Run drivers
     with GPIOContext(inputs_cfg), contextlib.ExitStack() as stack:
+        inputs = []
+        for driver_id in inputs_cfg:
+            for dcfg in inputs_cfg[driver_id]:
+                try:
+                    pin = None
+                    if ACT_PIN_ID in dcfg:
+                        pin = dcfg[ACT_PIN_ID]
+                        dcfg = {k: v for k, v in dcfg.items()
+                                if k != ACT_PIN_ID}
+                    driver_module = importlib.import_module(
+                        "piot.inputs." + driver_id)
+                    driver = getattr(driver_module, "Driver")(**dcfg)
+                    tags = [(driver_id + "." + k, v)
+                            for k, v in dcfg.items()
+                            if type(v) in (int, float, bool, str)]
+                    inputs.append((stack.enter_context(driver), pin, *tags))
+                except (KeyboardInterrupt, SystemExit):
+                    raise
+                except Exception:
+                    traceback.print_exc()
         outputs = []
         for driver_id in outputs_cfg:
             for dcfg in outputs_cfg[driver_id]:
@@ -125,10 +119,12 @@ def main():
                         "piot.outputs." + driver_id)
                     driver = getattr(driver_module, "Driver")(**dcfg)
                     outputs.append(stack.enter_context(driver))
+                except (KeyboardInterrupt, SystemExit):
+                    raise
                 except Exception:
                     traceback.print_exc()
         while True:
-            for driver_id, ts, fields, *tags in collect(inputs_cfg, interval):
+            for driver_id, ts, fields, *tags in collect(inputs, interval):
                 if fields:
                     fields = OrderedDict([(k, v) for k, v in fields.items()
                                          if v is not None])
@@ -160,24 +156,17 @@ class ActivationContext:
     def __init__(self, pin=None):
         self._open = False
         self._pin = pin
-        if self._pin:
-            self._lock = get_lock(
-                "{}/gpio{}.lock".format(LOCK_PREFIX, self._pin))
 
     def open(self):
-        if not self._pin or self._open:
+        if self._pin is None or self._open:
             return
         self._open = True
-        if self._lock:
-            self._lock.acquire()
         GPIO.output(self._pin, GPIO.LOW)
 
     def close(self):
-        if not self._pin or not self._open:
+        if self._pin is None or not self._open:
             return
         GPIO.output(self._pin, GPIO.HIGH)
-        if self._lock:
-            self._lock.release()
         self._open = False
 
     def __enter__(self):
@@ -189,24 +178,11 @@ class ActivationContext:
 
 
 class DriverBase:
-    def __init__(self, lock_file=None):
-        self._open = True
-        self._lock = get_lock(lock_file) if lock_file else None
-        if self._lock:
-            self._lock.acquire()
-
-    def close(self):
-        if not self._open:
-            return
-        if self._lock:
-            self._lock.release()
-        self._open = False
-
-    def sid(self):
-        return self.__class__.__module__.split(".")[-1]
-
     def run(self):
         raise NotImplementedError()
+
+    def close(self):
+        pass
 
     def __enter__(self):
         return self
@@ -214,20 +190,16 @@ class DriverBase:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-
-class I2CDriver(DriverBase):
-    def __init__(self):
-        super().__init__("{}/i2c.lock".format(LOCK_PREFIX))
+    def sid(self):
+        return self.__class__.__module__.split(".")[-1]
 
 
-class SMBusDriver(I2CDriver):
+class SMBusDriver(DriverBase):
     def __init__(self, bus=1):
         super().__init__()
         self._bus = SMBus(bus)
 
     def close(self):
-        if not self._open:
-            return
         if self._bus:
             self._bus.close()
         super().close()
@@ -235,24 +207,26 @@ class SMBusDriver(I2CDriver):
 
 class SerialDriver(DriverBase):
     def __init__(self, *args, **kwargs):
-        super().__init__("{}/serial.lock".format(LOCK_PREFIX))
-        self._serial = Serial(timeout=1, *args, **kwargs)
-        self._serial.reset_input_buffer()
-        self._serial.reset_output_buffer()
+        super().__init__()
+        self._args = args
+        self._kwargs = kwargs
 
-    def close(self):
-        if not self._open:
-            return
-        if self._serial:
-            self._serial.close()
-        super().close()
+    @contextlib.contextmanager
+    def _open_serial(self):
+        serial = Serial(timeout=1, *self._args, **self._kwargs)
+        try:
+            serial.reset_input_buffer()
+            serial.reset_output_buffer()
+            yield serial
+        finally:
+            serial.close()
 
-    def _cmd(self, cmd, size=0):
-        self._serial.write(cmd)
-        self._serial.flush()
+    def _cmd(self, serial, cmd, size=0):
+        serial.write(cmd)
+        serial.flush()
         time.sleep(0.1)
         if size > 0:
-            return self._serial.read(size)
+            return serial.read(size)
 
 
 if __name__ == "__main__":

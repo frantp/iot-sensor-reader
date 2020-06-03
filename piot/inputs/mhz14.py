@@ -31,7 +31,7 @@ class Driver(SerialDriver):
     spancalibrated = False
 
     def __init__(self, port, zerocalibrate=False, spancalibrate=False,
-        autocalibrate=True):
+                 autocalibrate=True):
         super().__init__(port, 9600)
         self.zerocalibrate = zerocalibrate
         self.spancalibrate = spancalibrate
@@ -39,17 +39,18 @@ class Driver(SerialDriver):
 
     def run(self):
         ts = time.time_ns()
-        if self.zerocalibrate and not Driver.zerocalibrated:
-            self._cmd(_CALZERO_SEQ, 9)
-            Driver.zerocalibrated = True
-        if self.spancalibrate and not Driver.spancalibrated:
-            self._cmd(_CALZERO_SEQ, 9)
-            Driver.spancalibrated = True
-        if self.autocalibrate:
-            self._cmd(_ABCENABLE_SEQ, 9)
-        else:
-            self._cmd(_ABCDISABLE_SEQ, 9)
-        res = self._cmd(_REQUEST_SEQ, 9)
+        with self._open_serial() as serial:
+            if self.zerocalibrate and not Driver.zerocalibrated:
+                self._cmd(serial, _CALZERO_SEQ, 9)
+                Driver.zerocalibrated = True
+            if self.spancalibrate and not Driver.spancalibrated:
+                self._cmd(serial, _CALZERO_SEQ, 9)
+                Driver.spancalibrated = True
+            if self.autocalibrate:
+                self._cmd(serial, _ABCENABLE_SEQ, 9)
+            else:
+                self._cmd(serial, _ABCDISABLE_SEQ, 9)
+            res = self._cmd(serial, _REQUEST_SEQ, 9)
         if res[0:2] != b"\xFF\x86" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         co2, = struct.unpack(">H", res[2:4])

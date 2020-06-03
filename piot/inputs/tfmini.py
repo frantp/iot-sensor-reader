@@ -20,8 +20,9 @@ class Driver(SerialDriver):
 
     def run(self):
         ts = time.time_ns()
-        self._serial.read_until(b"\x59\x59")
-        res = b"\x59\x59" + self._serial.read(7)
+        with self._open_serial() as serial:
+            serial.read_until(b"\x59\x59")
+            res = b"\x59\x59" + serial.read(7)
         if _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
         distance, strength = struct.unpack("<HH", res[2:6])
