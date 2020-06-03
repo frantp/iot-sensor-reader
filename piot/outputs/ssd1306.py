@@ -18,13 +18,17 @@ class Driver(DriverBase):
         self._buffer = {}
 
     def run(self, driver_id, ts, fields, tags):
+        ltags = [v for k, v in tags.items() if k != TAG_ERROR]
         if not fields:
             if TAG_ERROR in tags:
-                self._buffer[driver_id] = False
+                # Error
+                self._buffer[(driver_id, *ltags)] = False
             else:
+                # Sensor without output, discard
                 return
         else:
-            self._buffer[driver_id] = True
+            # Valid result
+            self._buffer[(driver_id, *ltags)] = True
 
         # Retrieve values
         timestr = datetime.datetime.now().strftime("%m-%d %H:%M:%S")
@@ -47,7 +51,7 @@ class Driver(DriverBase):
                         font_name=font_name)
         self._disp.text(f"{ssid[:idcw - 1] + ':':<{idcw}}{devip}", 0, 8, 0xFF,
                         font_name=font_name)
-        for i, (did, ok) in enumerate(self._buffer.items()):
+        for i, ((did, *_), ok) in enumerate(self._buffer.items()):
             y = 16 + 8 * (i // 6)
             ix = i % 6
             self._disp.text(did[:3], 1 + 21 * ix, y, 0xFF,
