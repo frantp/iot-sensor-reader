@@ -115,7 +115,7 @@ def collect(inputs, sync=0):
         except Exception:
             traceback.print_exc()
             ts = round_step(time.time_ns(), sync_ns)
-            yield (input.sid(), ts, None, (TAG_ERROR, None))
+            yield (input.sid(), ts, None, *cfg_tags, (TAG_ERROR, None))
 
 
 def main():
