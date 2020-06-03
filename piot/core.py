@@ -117,17 +117,17 @@ def main():
 
     # Run drivers
     with GPIOContext(inputs_cfg), contextlib.ExitStack() as stack:
-        outputs = []
-        for driver_id in outputs_cfg:
-            for dcfg in outputs_cfg[driver_id]:
-                try:
-                    driver_module = importlib.import_module(
-                        "piot.outputs." + driver_id)
-                    driver = getattr(driver_module, "Driver")(**dcfg)
-                    outputs.append(stack.enter_context(driver))
-                except Exception:
-                    traceback.print_exc()
         while True:
+            outputs = []
+            for driver_id in outputs_cfg:
+                for dcfg in outputs_cfg[driver_id]:
+                    try:
+                        driver_module = importlib.import_module(
+                            "piot.outputs." + driver_id)
+                        driver = getattr(driver_module, "Driver")(**dcfg)
+                        outputs.append(stack.enter_context(driver))
+                    except Exception:
+                        traceback.print_exc()
             for driver_id, ts, fields, *tags in collect(inputs_cfg, interval):
                 if fields:
                     fields = OrderedDict([(k, v) for k, v in fields.items()
