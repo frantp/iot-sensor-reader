@@ -3,7 +3,6 @@
 from collections import OrderedDict
 import contextlib
 import importlib
-import os
 from serial import Serial
 from smbus2 import SMBus
 import socket
