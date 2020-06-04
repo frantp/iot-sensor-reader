@@ -28,19 +28,26 @@ def _check(res):
 class Driver(SerialDriver):
     def __init__(self, port):
         super().__init__(port, 9600)
-        res = self._cmd(_seq(_PASSIVE_CODES), 10)
+        self._configured = False
+
+    def _configure(self, serial):
+        if self._configured:
+            return
+        res = self._cmd(serial, _seq(_PASSIVE_CODES), 10)
         if res[0:3] != b"\xAA\xC5\x02" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
-        res = self._cmd(_seq(_SETWORK_CODES), 10)
+        res = self._cmd(serial, _seq(_SETWORK_CODES), 10)
         if res[0:3] != b"\xAA\xC5\x06" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
-        res = self._cmd(_seq(_SETCONT_CODES), 10)
+        res = self._cmd(serial, _seq(_SETCONT_CODES), 10)
         if res[0:3] != b"\xAA\xC5\x08" or _check(res):
             raise SerialException("Incorrect response: {}".format(res.hex()))
+        self._configured = True
 
     def run(self):
         ts = time.time_ns()
         with self._open_serial() as serial:
+            self._configure(serial)
             res = self._cmd(serial, _seq(_REQUEST_CODES), 10)
         if res[0:2] != b"\xAA\xC0" or _check(res):
             return ts, None
