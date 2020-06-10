@@ -40,10 +40,10 @@ class Driver(SerialDriver):
             return
         if self.zerocalibrate:
             self._cmd(serial, _CALZERO_SEQ, 9)
-            Driver.zerocalibrated = True
+            self.zerocalibrated = True
         if self.spancalibrate:
             self._cmd(serial, _CALSPAN_SEQ, 9)
-            Driver.spancalibrated = True
+            self.spancalibrated = True
         self._cmd(serial, _ABCENABLE_SEQ if self.autocalibrate
                   else _ABCDISABLE_SEQ, 9)
         self._configured = True
