@@ -64,12 +64,11 @@ def get_inputs(cfg, stack):
     inputs = []
     for driver_id in cfg:
         for dcfg in cfg[driver_id]:
-            try:
+            with error_context():
                 pin = None
                 if ACT_PIN_ID in dcfg:
                     pin = dcfg[ACT_PIN_ID]
-                    dcfg = {k: v for k, v in dcfg.items()
-                            if k != ACT_PIN_ID}
+                    dcfg = {k: v for k, v in dcfg.items() if k != ACT_PIN_ID}
                 driver_module = importlib.import_module(
                     "piot.inputs." + driver_id)
                 driver = getattr(driver_module, "Driver")(**dcfg)
@@ -77,10 +76,6 @@ def get_inputs(cfg, stack):
                         for k, v in dcfg.items()
                         if type(v) in (int, float, bool, str)]
                 inputs.append((stack.enter_context(driver), pin, *tags))
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except Exception:
-                traceback.print_exc()
     return inputs
 
 
@@ -88,15 +83,11 @@ def get_outputs(cfg, stack):
     outputs = []
     for driver_id in cfg:
         for dcfg in cfg[driver_id]:
-            try:
+            with error_context():
                 driver_module = importlib.import_module(
                     "piot.outputs." + driver_id)
                 driver = getattr(driver_module, "Driver")(**dcfg)
                 outputs.append(stack.enter_context(driver))
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except Exception:
-                traceback.print_exc()
     return outputs
 
 
@@ -105,15 +96,12 @@ def collect(inputs, sync=0):
     time.sleep(sync_wait(sync))
     for input, pin, *cfg_tags in inputs:
         try:
-            with activation_context(pin):
+            with error_context(True), activation_context(pin):
                 res = input.run()
                 for did, ts, fields, *tags in res:
                     tags.extend(cfg_tags)
                     yield (did, round_step(ts, sync_ns), fields, *tags)
-        except (KeyboardInterrupt, SystemExit):
-            raise
         except Exception:
-            traceback.print_exc()
             ts = round_step(time.time_ns(), sync_ns)
             yield (input.sid(), ts, None, *cfg_tags, (TAG_ERROR, None))
 
@@ -142,10 +130,8 @@ def main():
                                          if v is not None])
                 dtags = OrderedDict([("host", host)] + tags)
                 for output in outputs:
-                    try:
+                    with error_context():
                         output.run(driver_id, ts, fields, dtags)
-                    except Exception:
-                        traceback.print_exc()
 
 
 @contextlib.contextmanager
@@ -168,6 +154,18 @@ def activation_context(pin=None):
     finally:
         if pin is not None:
             GPIO.output(pin, GPIO.HIGH)
+
+
+@contextlib.contextmanager
+def error_context(raise_all=False):
+    try:
+        yield
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        traceback.print_exc()
+        if raise_all:
+            raise
 
 
 class DriverBase:
