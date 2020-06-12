@@ -6,6 +6,7 @@ import importlib
 import signal
 import socket
 import sys
+import threading
 import time
 import toml
 import traceback
@@ -27,6 +28,7 @@ __all__ = [
 
 TAG_ERROR = "ERROR"
 ACT_PIN_ID = "ACTIVATION_PIN"
+_TERM_CV = threading.Condition()
 _TERMINATED = False
 
 
@@ -95,7 +97,8 @@ def get_outputs(cfg, stack):
 
 def collect(inputs, sync=0):
     sync_ns = int(sync * 1e9)
-    time.sleep(sync_wait(sync))
+    with error_context(), _TERM_CV:
+        _TERM_CV.wait(sync_wait(sync))
     for input, pin, *cfg_tags in inputs:
         try:
             with error_context(True), activation_context(pin):
@@ -118,6 +121,8 @@ def main():
     def handle_term(signum, frame):
         global _TERMINATED
         _TERMINATED = True
+        with _TERM_CV:
+            _TERM_CV.notify_all()
     signal.signal(signal.SIGTERM, handle_term)
 
     # Read configuration
