@@ -20,3 +20,4 @@ class Driver(DriverBase):
             return
         msg = format_msg(ts, driver_id, tags, fields)
         self._fd.write(msg + os.linesep)
+        self._fd.flush()
