@@ -18,7 +18,8 @@ except ImportError:
 
 
 __all__ = [
-    "get_inputs", "get_outputs", "collect", "GPIOContext", "ActivationContext",
+    "get_inputs", "get_outputs", "collect",
+    "gpio_context", "activation_context",
     "DriverBase", "SMBusDriver", "SerialDriver"
 ]
 
@@ -104,7 +105,7 @@ def collect(inputs, sync=0):
     time.sleep(sync_wait(sync))
     for input, pin, *cfg_tags in inputs:
         try:
-            with ActivationContext(pin):
+            with activation_context(pin):
                 res = input.run()
                 for did, ts, fields, *tags in res:
                     tags.extend(cfg_tags)
@@ -131,7 +132,7 @@ def main():
     outputs_cfg = cfg.get("outputs", {})
 
     # Run drivers
-    with GPIOContext(inputs_cfg), contextlib.ExitStack() as stack:
+    with gpio_context(inputs_cfg), contextlib.ExitStack() as stack:
         inputs = get_inputs(inputs_cfg, stack)
         outputs = get_outputs(outputs_cfg, stack)
         while True:
@@ -147,45 +148,26 @@ def main():
                         traceback.print_exc()
 
 
-class GPIOContext:
-    def __init__(self, cfg):
+@contextlib.contextmanager
+def gpio_context(cfg):
+    try:
         GPIO.setmode(GPIO.BCM)
         pin_list = list(find(cfg, ACT_PIN_ID))
         GPIO.setup(pin_list, GPIO.OUT, initial=GPIO.HIGH)
-
-    def close(self):
+        yield
+    finally:
         GPIO.cleanup()
 
-    def __enter__(self):
-        return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
-
-
-class ActivationContext:
-    def __init__(self, pin=None):
-        self._open = False
-        self._pin = pin
-
-    def open(self):
-        if self._pin is None or self._open:
-            return
-        self._open = True
-        GPIO.output(self._pin, GPIO.LOW)
-
-    def close(self):
-        if self._pin is None or not self._open:
-            return
-        GPIO.output(self._pin, GPIO.HIGH)
-        self._open = False
-
-    def __enter__(self):
-        self.open()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+@contextlib.contextmanager
+def activation_context(pin=None):
+    try:
+        if pin is not None:
+            GPIO.output(pin, GPIO.LOW)
+        yield
+    finally:
+        if pin is not None:
+            GPIO.output(pin, GPIO.HIGH)
 
 
 class DriverBase:
