@@ -3,14 +3,15 @@
 from collections import OrderedDict
 import contextlib
 import importlib
-from serial import Serial
-from smbus2 import SMBus
+import signal
 import socket
 import sys
 import time
 import toml
 import traceback
 
+from serial import Serial
+from smbus2 import SMBus
 try:
     import RPi.GPIO as GPIO
 except ImportError:
@@ -26,6 +27,7 @@ __all__ = [
 
 TAG_ERROR = "ERROR"
 ACT_PIN_ID = "ACTIVATION_PIN"
+_TERMINATED = False
 
 
 def find(obj, key):
@@ -112,6 +114,12 @@ def main():
         exit()
     cfg_file = sys.argv[1]
 
+    # Termination handling
+    def handle_term(signum, frame):
+        global _TERMINATED
+        _TERMINATED = True
+    signal.signal(signal.SIGTERM, handle_term)
+
     # Read configuration
     cfg = toml.load(cfg_file)
     interval = cfg.get("interval", 0)
@@ -120,18 +128,22 @@ def main():
     outputs_cfg = cfg.get("outputs", {})
 
     # Run drivers
-    with gpio_context(inputs_cfg), contextlib.ExitStack() as stack:
-        inputs = get_inputs(inputs_cfg, stack)
-        outputs = get_outputs(outputs_cfg, stack)
-        while True:
-            for driver_id, ts, fields, *tags in collect(inputs, interval):
-                if fields:
-                    fields = OrderedDict([(k, v) for k, v in fields.items()
-                                         if v is not None])
-                dtags = OrderedDict([("host", host)] + tags)
-                for output in outputs:
-                    with error_context():
-                        output.run(driver_id, ts, fields, dtags)
+    try:
+        print("Piot started", file=sys.stderr)
+        with gpio_context(inputs_cfg), contextlib.ExitStack() as stack:
+            inputs = get_inputs(inputs_cfg, stack)
+            outputs = get_outputs(outputs_cfg, stack)
+            while True:
+                for driver_id, ts, fields, *tags in collect(inputs, interval):
+                    if fields:
+                        fields = OrderedDict([(k, v) for k, v in fields.items()
+                                             if v is not None])
+                    dtags = OrderedDict([("host", host)] + tags)
+                    for output in outputs:
+                        with error_context():
+                            output.run(driver_id, ts, fields, dtags)
+    except TerminationError:
+        print("Piot stopped", file=sys.stderr)
 
 
 @contextlib.contextmanager
@@ -166,6 +178,8 @@ def error_context(raise_all=False):
         traceback.print_exc()
         if raise_all:
             raise
+    if _TERMINATED:
+        raise TerminationError
 
 
 class DriverBase:
@@ -218,6 +232,10 @@ class SerialDriver(DriverBase):
         time.sleep(0.1)
         if size > 0:
             return serial.read(size)
+
+
+class TerminationError(Exception):
+    pass
 
 
 if __name__ == "__main__":
