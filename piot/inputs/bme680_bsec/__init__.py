@@ -19,9 +19,9 @@ def _pipe(fh, q):
 
 
 class Driver(DriverBase):
-    def __init__(self):
+    def __init__(self, address=0x77):
         self._queue = deque(maxlen=1)
-        self._proc = sp.Popen([EXE], text=True,
+        self._proc = sp.Popen([EXE, str(address)], text=True,
                               stdout=sp.PIPE, stderr=sp.DEVNULL)
         self._thread = threading.Thread(target=_pipe,
                                         args=(self._proc.stdout, self._queue))
