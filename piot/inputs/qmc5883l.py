@@ -17,9 +17,17 @@ class Driver(SMBusDriver):
     def __init__(self, address=0x0D, bus=1):
         super().__init__(bus)
         self._address = address
+        self._configured = False
+
+    def _configure(self):
+        if self._configured:
+            return
+        self._bus.write_byte_data(self._address, _REG_PERIOD, 0x01)
         self._bus.write_byte_data(self._address, _REG_CTRL1, 0x01)
+        self._configured = True
 
     def run(self):
+        self._configure()
         ts = time.time_ns()
         res = self._bus.read_i2c_block_data(self._address, _REG_DATA, 9)
         x, y, z, status, temperature = struct.unpack("<hhhBh", bytearray(res))
