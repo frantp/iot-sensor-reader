@@ -15,7 +15,7 @@ def _pipe(fh, q):
     for line in fh:
         q.append(json.loads(line.strip(), object_pairs_hook=OrderedDict))
     fh.close()
-    q.put(None)
+    q.append(None)
 
 
 class Driver(DriverBase):
