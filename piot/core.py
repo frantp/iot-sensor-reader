@@ -191,7 +191,7 @@ def error_context(raise_all=False):
         if raise_all:
             raise
     if _TERMINATED:
-        raise TerminationError
+        raise TerminationError()
 
 
 class DriverBase:
