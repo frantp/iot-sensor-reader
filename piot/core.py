@@ -10,6 +10,7 @@ import threading
 import time
 import toml
 import traceback
+import urllib.request
 
 from serial import Serial
 from smbus2 import SMBus
@@ -30,6 +31,11 @@ TAG_ERROR = "ERROR"
 ACT_PIN_ID = "ACTIVATION_PIN"
 _TERM_CV = threading.Condition()
 _TERMINATED = False
+
+
+def get_external_ip():
+    with urllib.request.urlopen("https://ifconfig.me/") as f:
+        return f.read().decode('utf-8')
 
 
 def find(obj, key):
@@ -128,6 +134,7 @@ def main():
     # Read configuration
     cfg = toml.load(cfg_file)
     interval = cfg.get("interval", 0)
+    loc = cfg.get("loc", get_external_ip())
     host = cfg.get("host", socket.gethostname())
     inputs_cfg = cfg.get("inputs", {})
     outputs_cfg = cfg.get("outputs", {})
@@ -143,7 +150,7 @@ def main():
                     if fields:
                         fields = OrderedDict([(k, v) for k, v in fields.items()
                                              if v is not None])
-                    dtags = OrderedDict([("host", host)] + tags)
+                    dtags = OrderedDict([("loc", loc), ("host", host)] + tags)
                     for output in outputs:
                         with error_context():
                             output.run(driver_id, ts, fields, dtags)
