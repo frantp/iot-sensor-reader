@@ -1,6 +1,5 @@
 toml
 pika
-RPi.GPIO
 smbus2
 pyserial
 adafruit-circuitpython-adxl34x  # adxl34x
